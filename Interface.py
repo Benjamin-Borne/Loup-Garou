@@ -1,90 +1,141 @@
 from tkinter import *
 from tkinter import scrolledtext
-from PIL import ImageTk, Image
+from PIL import *
 from random import randint
+import time
 
-localPlayer = "Victor"
-ROLE = ["loup-garou", "petite-fille","cupidon","chasseur","simple-villageois","voleur","voyante","sorciere"]
-currentRole = ROLE[randint(0, len(ROLE)-1)]
+def false():
+    return False
 
 
-window = Tk()
+class mainInterface(Tk):
+    def __init__(self, playersList, localPlayer):
+        Tk.__init__(self)
+        self.local = localPlayer
+        self.role = self.local.role
+        self.frameChat = Frame(self, bg="#848484", width=400)
+        self.chatHistory = scrolledtext.ScrolledText(self.frameChat, wrap=WORD, state='disabled')
+        self.entryFrame = Frame(self.frameChat)
+        self.entryMessage = Entry(self.entryFrame, width=54)
+        self.leftFrame = Frame(self, bg="#3396c7")
+        self.framePlayer = Frame(self.leftFrame, width=400, height=600, bg="lightblue")
+        self.listePlayers = Listbox(self.framePlayer, height=25, width=40, selectmode="single")
+        self.chronoGUI = Label(self.leftFrame, text="Liste des joueurs", font=("Arial", 14), bg="lightblue")
+        self.players = [playersList[i].nom for i in range(len(playersList))]
 
-window.title("Loup Garou")
-window.iconbitmap("loup-garou-dos.ico")
-window.config(background="#3396c7")
-window.attributes('-fullscreen', True)
+        self.roleActionFrame = Frame(self, bg="#3396c7")
+        if self.role == "simple-villageois":
+            self.roleAction = Label(self.roleActionFrame, text="PAS D'ACTION", font=("Arial", 14), bg="lightblue")
+            self.roleAction.pack()
+        else:
+            self.roleAction = Listbox(self.roleActionFrame, height=25, width=40, selectmode="single")
+            self.roleAction.pack()
 
-#Interface Chat
-def chat():
-    message = entryMessage.get()
-    if message != "":
-        chatHistory.config(state='normal')
-        chatHistory.insert(END, localPlayer + " : " + message + "\n")
-        chatHistory.config(state='disabled')
+        self.frameChat.pack_propagate(False)
+        self.frameChat.pack(side=RIGHT, padx=10, pady=10, fill="y")
+
+        self.roleActionFrame.pack(side="right")
+
+        self.title("Loup Garou")
+        self.iconbitmap("ressources/loup-garou-dos.ico")
+        self.config(background="#3396c7")
+        self.minsize(975,650)
+
+        self.chatHistory.pack(expand="yes", fill="both")
+
+        self.entryFrame.pack()
+        self.entryMessage.pack(side='left')
+
+        self.sendChat = Button(self.entryFrame, text="Envoyer", width=10)
+        self.sendChat.pack(side="right")
+
+        self.leftFrame.pack(side=LEFT)
+        self.chronoGUI.pack(side ="top")
         
+        self.framePlayer.pack(side="bottom", padx=20)
 
-        entryMessage.delete(0, END)
+        labelPlayer = Label(self.framePlayer, text="Liste des joueurs", font=("Arial", 14), bg="lightblue")
+        labelPlayer.pack(pady=10)
 
+        self.listePlayers.pack(pady=10)
+        
+        self.sendVote = Button(self.framePlayer, text="Voter", width=10)
+        self.sendVote.pack()
 
-frameChat = Frame(window, bg="#848484", width=400)
-frameChat.pack_propagate(False)
-frameChat.pack(side=RIGHT, padx=10, pady=10, fill="y")
+        self.frameRole = Frame(self.leftFrame, bg="#3396c7")
+        self.frameRole.pack(side="top", pady=20)
+        self.img = Image.open("loup-garou-dos"+".png")
+        self.img = self.img.resize((200,200))
+        self.img = ImageTk.PhotoImage(self.img,(100,100))
+        self.roleImg = Label(self.frameRole, image=self.img, bg ="#3396c7")
+        self.roleTxt = Label(self.frameRole, text=None, bg="#3396c7",font=("Arial", 28), fg="white")
+        self.roleImg.pack(side="bottom")
+        self.roleTxt.pack(expand="yes", fill="both", side="top")
+    
+        self.changeImage(self.role)
 
-chatHistory = scrolledtext.ScrolledText(frameChat, wrap=WORD, state='disabled')
-chatHistory.pack(expand="yes", fill="both")
+    def changeImage(self,role):
+        self.img = Image.open("ressources/"+role+".png")
+        self.img = self.img.resize((200,200))
+        self.img = ImageTk.PhotoImage(self.img,(100,100))
 
-entryFrame = Frame(frameChat)
-entryFrame.pack()
-entryMessage = Entry(entryFrame, width=54)
-entryMessage.pack(side='left')
+        self.roleImg.configure(image=self.img)
+        self.roleTxt.configure(text=role)
 
-sendChat = Button(entryFrame, text="Envoyer", width=10, command=chat)
-sendChat.pack(side="right")
-
-#Interface joueur
-def vote():
-    voted = listePlayers.get(first=listePlayers.curselection()[0])
-    chatHistory.config(state='normal')
-    chatHistory.insert(END, localPlayer + " a voté contre " + voted + "\n")
-    chatHistory.config(state='disabled')
-
-    listePlayers.selection_clear(0, END)
+        self.role = role
     
 
+    def chat(self, joueur, message = ""):
+        if message == "":
+            message = self.entryMessage.get()
+        if message != "":
+            if joueur != "":
+                self.chatHistory.config(state='normal')
+                self.chatHistory.insert(END, joueur + " : " + message + "\n")
+                self.chatHistory.config(state='disabled')
+                self.entryMessage.delete(0, END)
+            else:
+                self.chatHistory.config(state='normal')
+                self.chatHistory.insert(END, message + "\n")
+                self.chatHistory.config(state='disabled')
+                self.entryMessage.delete(0, END)
 
-leftFrame = Frame(window, bg="#3396c7")
-leftFrame.pack(side=LEFT)
-
-framePlayer = Frame(leftFrame, width=400, height=600, bg="lightblue")
-framePlayer.pack(side="bottom", padx=20)
-
-labelPlayer = Label(framePlayer, text="Liste des joueurs", font=("Arial", 14), bg="lightblue")
-labelPlayer.pack(pady=10)
-
-listePlayers = Listbox(framePlayer, height=25, width=40, selectmode="single")
-
-sendVote = Button(framePlayer, text="Voter", width=10, command=vote)
-sendVote.pack()
-
-players = [localPlayer, "Joueur 2", "Joueur 3", "Joueur 4", "Joueur 5"]
-for player in players:
-    listePlayers.insert(END, player)
-
-listePlayers.pack(pady=10)
-
-frameRole = Frame(leftFrame, bg="#3396c7")
-frameRole.pack(side="top", pady=20)
-
-
-img = Image.open(currentRole+".png")
-img = img.resize((200,200))
-img = ImageTk.PhotoImage(img,(100,100))
+    def chronometre(self, temps, condition = false):
+        for i in range(temps,0,-1):
+            if not condition():
+                self.chronoGUI.configure(text = str(i))
+                time.sleep(1)
+            else:
+                self.chronoGUI.configure(text = "0")
+                return
 
 
-roleImg = Label(frameRole, image=img, bg ="#3396c7")
-roleImg.pack(side="bottom")
-roleTxt = Label(frameRole, text=currentRole, bg="#3396c7",font=("Arial", 28), fg="white")
-roleTxt.pack(expand="yes", fill="both", side="top")
+    def updateList(self, playerAlive):
+            playersAlive = [playerAlive[i].nom for i in range(len(playerAlive))]
+            self.listePlayers.delete(0, self.listePlayers.size())
+            for player in self.players:
+                if player in playersAlive:
+                    self.listePlayers.insert(END, player)
+                else:
+                    self.listePlayers.insert(END, player + " (mort)")
+    
+    def updateRoleAction(self, affectedPlayers, roleName):
+        if roleName == self.role:
+            aPlayers = [affectedPlayers[i].nom for i in range(len(affectedPlayers))]
+            self.roleAction.delete(0, self.listePlayers.size())
+            for player in aPlayers:
+                self.roleAction.insert(END, player)
 
-window.mainloop()
+    def action(self, affectedPlayers, roleName):  
+        if self.local.role == roleName:
+            self.updateRoleAction(affectedPlayers, roleName)
+            self.roleAction.pack()
+            self.chronometre(10,self.roleAction.curselection)
+            if self.roleAction.curselection():
+                player = self.roleAction.get(first=self.roleAction.curselection()[0])
+                self.roleAction.pack_forget()
+                return player
+        self.roleAction.pack_forget()
+        return None       
+
+
