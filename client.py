@@ -1,15 +1,20 @@
 import socket
 
-host = '192.168.197.63'
-port = 5000
+class Client:
 
-serveur_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-serveur_socket.connect((host, port))
-
-print(f"connecté à {port}")
-
-serveur_socket.send("EOF".encode('utf-8'))
-
-print("close")
-serveur_socket.close()
-
+	def __init__(self, host, port):
+		self.host = host
+		self.port = port
+		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		
+	def connection(self):
+		try:
+			self.socket.connect((self.host, self.port))
+		except:
+			return "La clef est corrompue"
+	
+	def send_data(self, data):
+		self.socket.send(data.encode('utf-8'))
+		
+	def stop(self):
+		self.socket.close()

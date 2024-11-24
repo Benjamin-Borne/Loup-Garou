@@ -26,7 +26,7 @@ class MySocket:
 			
 			response = client.recv(255)
 			if response != "":
-				print(response
+				print(response)
 	def closeSock(self):
 		print("close")
 		client.close()
