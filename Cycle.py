@@ -257,8 +257,11 @@ class Cycle:
         sorcieres = [j for j in self.joueurs if isinstance(j, Sorciere) and j.est_vivant]
         if sorcieres:
             sorciere = sorcieres[0]
-            if victime and random.choice([True, False]):  #choix de la sorcière************************************
-                sorciere.sauver(victime)
+            
+            if victime:  #choix de la sorcière************************************
+                save = interface.action(["Sauver", "Ne pas sauver"], "Sorcière")
+                if save == "Sauver":
+                    sorciere.sauver(victime)
                 
             else:
                 cible = random.choice([j for j in self.joueurs if j != sorciere])  #choix de la sorcière************************************

@@ -36,8 +36,12 @@ class mainInterface(tk.Tk):
 
         self.roleActionFrame.pack(side="right")
 
+        self.img = Image.open("ressources/loup-garou-dos"+".png")
+        self.img = self.img.resize((200,200))
+        self.img = ImageTk.PhotoImage(self.img,(100,100))
+
         self.title("Loup Garou")
-        self.iconbitmap("ressources/loup-garou-dos.ico")
+        self.iconphoto(True,self.img)
         self.config(background="#3396c7")
         self.minsize(975,650)
 
@@ -64,9 +68,7 @@ class mainInterface(tk.Tk):
 
         self.frameRole = tk.Frame(self.leftFrame, bg="#3396c7")
         self.frameRole.pack(side="top", pady=20)
-        self.img = Image.open("ressources/loup-garou-dos"+".png")
-        self.img = self.img.resize((200,200))
-        self.img = ImageTk.PhotoImage(self.img,(100,100))
+        
         self.roleImg = tk.Label(self.frameRole, image=self.img, bg ="#3396c7")
         self.roleTxt = tk.Label(self.frameRole, text=None, bg="#3396c7",font=("Arial", 28), fg="white")
         self.roleImg.pack(side="bottom")
