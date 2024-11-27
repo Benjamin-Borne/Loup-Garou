@@ -34,7 +34,7 @@ class LoupGarouBlanc(LoupGarou):
 
     def attaquer(self, cible):
         if cible.est_vivant:
-            
+            pass
             
             
 class Voyante(Joueur):
