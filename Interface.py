@@ -77,7 +77,7 @@ class mainInterface(tk.Tk):
         self.changeImage(self.role)
 
     def changeImage(self,role):
-        self.img = Image.open("ressources/"+role+".png")
+        self.img = Image.open("ressources/"+role.lower()+".png")
         self.img = self.img.resize((200,200))
         self.img = ImageTk.PhotoImage(self.img,(100,100))
 
