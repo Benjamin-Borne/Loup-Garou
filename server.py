@@ -9,9 +9,9 @@ class MySocket:
 	def __init__(self):
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.port = 5000
-		self.sock.timeout(0)
+		self.sock.settimeout(0)
 		try:
-			self.sock.connect('10.254.254.254', '1')
+			self.sock.connect(('10.254.254.254', 1))
 			self.host = self.sock.getsockname()[0]
 		except Exception as e:
 			self.host = "Erreur:" +str(e)
