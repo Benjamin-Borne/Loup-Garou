@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import scrolledtext
 from PIL import ImageTk
-from random import randint
+from PIL import Image
 import time
 
 def false():
@@ -64,7 +64,7 @@ class mainInterface(tk.Tk):
 
         self.frameRole = tk.Frame(self.leftFrame, bg="#3396c7")
         self.frameRole.pack(side="top", pady=20)
-        self.img = tk.Image.open("ressources/loup-garou-dos"+".png")
+        self.img = Image.open("ressources/loup-garou-dos"+".png")
         self.img = self.img.resize((200,200))
         self.img = ImageTk.PhotoImage(self.img,(100,100))
         self.roleImg = tk.Label(self.frameRole, image=self.img, bg ="#3396c7")
@@ -75,7 +75,7 @@ class mainInterface(tk.Tk):
         self.changeImage(self.role)
 
     def changeImage(self,role):
-        self.img = tk.Image.open("ressources/"+role+".png")
+        self.img = Image.open("ressources/"+role+".png")
         self.img = self.img.resize((200,200))
         self.img = ImageTk.PhotoImage(self.img,(100,100))
 
