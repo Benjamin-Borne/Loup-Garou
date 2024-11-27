@@ -202,12 +202,13 @@ class Cycle:
                 cupidon = j
                 break 
             
-        autres_joueurs = [j for j in self.joueurs ]
         joueur1 = interface.action(joueurs, "Cupidon")
-        #joueur1, joueur2 = random.sample(autres_joueurs, 2)  # il faudra faire en sorte de faire choisir le cupidon *********
-        cupidon.lier_amoureux(joueur1, joueur1)
-        if joueur1: # à modifier
-            self.amoureux = [joueur1, joueur1]
+        joueur2 = interface.action(joueurs, "Cupidon")
+        if joueur1 and joueur2 and joueur1 != joueur2:
+            joueur1 = jeu.trouver_joueur(joueur1)
+            joueur2 = jeu.trouver_joueur(joueur2)
+            cupidon.lier_amoureux(joueur1, joueur2)
+            self.amoureux = [joueur1, joueur2]
         
         
     def phase_voleur(self):
@@ -243,13 +244,13 @@ class Cycle:
             victime = interface.action(villageois, "Loup-Garou")   # choix des loupGarou ************************************
             victime = self.trouver_joueur(victime)
             for loup in loups:
-                loup.attaquer(victime)
+                #loup.attaquer(victime)
+                loup.attaquer(villageois[0])
 
         # La Voyante sonde un joueur
         voyantes = [j for j in self.joueurs if isinstance(j, Voyante) and j.est_vivant]
         if voyantes:
             voyante = voyantes[0]
-            interface.updateRoleAction(self.joueurs, "Voyante")
             cible = self.trouver_joueur(interface.action(self.joueurs, "Voyante"))  #************************************
             voyante.sonder(cible)
         
@@ -264,9 +265,10 @@ class Cycle:
                     sorciere.sauver(victime)
                 
             else:
-                cible = random.choice([j for j in self.joueurs if j != sorciere])  #choix de la sorcière************************************
-                interface.updateRoleAction(self.joueurs, "Sorcière")
-                sorciere.tuer(joueurs[8])  
+                cible = interface.action([j for j in self.joueurs if j != sorciere], "Sorcière") #choix de la sorcière************************************
+                if cible:
+                    cible = jeu.trouver_joueur(cible)
+                    sorciere.tuer(cible)  
 
         self.nuit_numero += 1
 
