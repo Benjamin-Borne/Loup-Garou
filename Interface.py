@@ -5,11 +5,35 @@ from PIL import Image
 import time
 
 def false():
+    """
+    Fonction utilitaire qui retourne False.
+    Utilisée comme condition par défaut pour certaines méthodes.
+    """
     return False
 
 
 class mainInterface(tk.Tk):
+
+    """
+    Classe principale pour l'interface graphique du jeu Loup-Garou.
+    Hérite de la classe tk.Tk et gère :
+    - Le chat
+    - La liste des joueurs
+    - L'affichage du rôle
+    - Les actions spécifiques aux rôles
+    - Le chronomètre
+    """
+    
     def __init__(self, playersList, localPlayer):
+    
+        """
+        Initialise l'interface principale.
+
+        Input:
+            playersList (list): Liste des joueurs.
+            localPlayer (object): Joueur local.
+        """
+            
         tk.Tk.__init__(self)
         self.local = localPlayer
         self.role = self.local.role
@@ -77,6 +101,14 @@ class mainInterface(tk.Tk):
         self.changeImage(self.role)
 
     def changeImage(self,role):
+    
+        """
+        Change l'image et le texte associés au rôle.
+
+        Input:
+            role (str): Nom du rôle actuel.
+        """
+        
         self.img = Image.open("ressources/"+role.lower()+".png")
         self.img = self.img.resize((200,200))
         self.img = ImageTk.PhotoImage(self.img,(100,100))
@@ -88,6 +120,15 @@ class mainInterface(tk.Tk):
     
 
     def chat(self, joueur, message = ""):
+    
+        """
+        Ajoute un message au chat.
+
+        Input:
+            joueur (str): Nom du joueur qui envoie le message (vide pour les messages globaux).
+            message (str): Contenu du message. Si vide, prend le contenu de `entryMessage`.
+        """
+        
         if message == "":
             message = self.entryMessage.get()
         if message != "":
@@ -103,6 +144,15 @@ class mainInterface(tk.Tk):
                 self.entryMessage.delete(0, tk.END)
 
     def chronometre(self, temps, condition = false):
+    
+        """
+        Lance un compte à rebours.
+
+        Args:
+            temps (int): Temps en secondes pour le compte à rebours.
+            condition (function): Fonction qui retourne True pour arrêter le chronomètre prématurément.
+        """
+        
         for i in range(temps,0,-1):
             if not condition():
                 self.chronoGUI.configure(text = str(i))
@@ -113,22 +163,51 @@ class mainInterface(tk.Tk):
 
 
     def updateList(self, playerAlive):
-            playersAlive = [playerAlive[i].nom for i in range(len(playerAlive))]
-            self.listePlayers.delete(0, self.listePlayers.size())
-            for player in self.players:
-                if player in playersAlive:
-                    self.listePlayers.insert(tk.END, player)
-                else:
-                    self.listePlayers.insert(tk.END, player + " (mort)")
+    
+        """
+        Met à jour la liste des joueurs affichés, indiquant ceux qui sont morts.
+
+        Input:
+            playerAlive (list): Liste des joueurs vivants, chaque joueur ayant un attribut `nom`.
+        """
+        
+        playersAlive = [playerAlive[i].nom for i in range(len(playerAlive))]
+        self.listePlayers.delete(0, self.listePlayers.size())
+        for player in self.players:
+            if player in playersAlive:
+                self.listePlayers.insert(tk.END, player)
+            else:
+                self.listePlayers.insert(tk.END, player + " (mort)")
     
     def updateRoleAction(self, affectedPlayers, roleName):
+    
+        """
+        Met à jour la liste des actions disponibles en fonction des joueurs affectés et du rôle.
+
+        Input:
+            affectedPlayers (list): Liste des joueurs concernés par l'action.
+            roleName (str): Nom du rôle exécutant l'action.
+        """
+            
         if roleName == self.role:
             aPlayers = [affectedPlayers[i].nom for i in range(len(affectedPlayers))]
             self.roleAction.delete(0, self.listePlayers.size())
             for player in aPlayers:
                 self.roleAction.insert(tk.END, player)
 
-    def action(self, affectedPlayers, roleName):  
+    def action(self, affectedPlayers, roleName): 
+    
+        """
+        Réalise une action en fonction du rôle actuel et des joueurs affectés.
+
+        Input:
+            affectedPlayers (list): Liste des joueurs concernés par l'action.
+            roleName (str): Nom du rôle exécutant l'action.
+
+        Output:
+            str: Nom du joueur sélectionné pour l'action, ou None si aucune action n'a été prise.
+        """
+         
         if self.local.role == roleName:
             self.updateRoleAction(affectedPlayers, roleName)
             self.roleAction.pack()
