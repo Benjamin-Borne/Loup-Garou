@@ -6,12 +6,40 @@ import threading
 
 # Classe de base Joueur
 class Joueur:
+
+    """
+    Classe de base représentant un joueur.
+
+    Attributs :
+        nom (str) : Nom du joueur.
+        est_vivant (bool) : Indique si le joueur est vivant.
+        role (str) : Rôle du joueur (par défaut, None).
+
+    Méthodes :
+        __str__() : Retourne une représentation textuelle du joueur.
+        mourir() : Marque le joueur comme mort et met à jour l'interface.
+    """
+    
     def __init__(self, nom):
+    
+        """
+        Initialise un joueur.
+
+        Input:
+            nom (str) : Nom du joueur.
+        """
+        
         self.nom = nom
         self.est_vivant = True
         self.role = None
 
     def __str__(self):
+    
+	"""
+	Output:
+		(str) : nom et rôle du joueur.
+	"""
+	   
         return f"{self.nom} ({self.role})"
 
     def mourir(self):
@@ -22,6 +50,14 @@ class Joueur:
 
 # Classes spécifiques pour chaque rôle
 class LoupGarou(Joueur):
+
+    """
+    Classe représentant un Loup-Garou.
+
+    Méthodes :
+        attaquer(joueur) : Attaque un joueur donné.
+    """
+    
     def __init__(self, nom):
         super().__init__(nom)
         self.role = "Loup-Garou"
@@ -36,6 +72,14 @@ class LoupGarou(Joueur):
                 
             
 class Voyante(Joueur):
+
+    """
+    Classe représentant une Voyante.
+
+    Méthodes :
+        sonder(joueur) : Découvre le rôle d'un joueur donné.
+    """
+    
     def __init__(self, nom):
         super().__init__(nom)
         self.role = "Voyante"
@@ -45,12 +89,33 @@ class Voyante(Joueur):
             jeu.chat("Maitre du jeu",f"{self.nom} (Voyante) sonde {joueur.nom}: {joueur.role}")
         else:
             jeu.chat("Maitre du jeu",f"{self.nom} (Voyante) ne sonde pas")
+            
+            
 class Villageois(Joueur):
+
+    """
+    Classe représentant un Villageois.
+    (Aucun pouvoir spécifique, rôle de base.)
+    """
+    
     def __init__(self, nom):
         super().__init__(nom)
         self.role = "Villageois"
 
 class Sorciere(Joueur):
+
+    """
+    Classe représentant une Sorcière.
+
+    Attributs :
+        potion_vie (bool) : Indique si la potion de vie est disponible.
+        potion_mort (bool) : Indique si la potion de mort est disponible.
+
+    Méthodes :
+        sauver(joueur) : Utilise la potion de vie sur un joueur.
+        tuer(joueur) : Utilise la potion de mort sur un joueur.
+    """
+    
     def __init__(self, nom):
         super().__init__(nom)
         self.role = "Sorcière"
@@ -70,6 +135,15 @@ class Sorciere(Joueur):
             self.potion_mort = False
 
 class Chasseur(Joueur):
+
+    """
+    Classe représentant un Chasseur.
+
+    Méthodes :
+        tirer(cible) : Tire sur un joueur après sa mort.
+        mourir() : Redéfinition pour déclencher l'action de tir.
+    """
+    
     def __init__(self, nom):
         super().__init__(nom)
         self.role = "Chasseur"
@@ -87,6 +161,17 @@ class Chasseur(Joueur):
         self.tirer(jeu.trouver_joueur(interface.action(jeu.playerAlive(),"Chasseur")))
 
 class Cupidon(Joueur):
+
+    """
+    Classe représentant Cupidon.
+
+    Attributs :
+        amoureux (list) : Liste des deux joueurs liés comme amoureux.
+
+    Méthodes :
+        lier_amoureux(joueur1, joueur2) : Lie deux joueurs comme amoureux.
+    """
+    
     def __init__(self, nom):
         super().__init__(nom)
         self.role = "Cupidon"
@@ -104,6 +189,17 @@ class Cupidon(Joueur):
             jeu.chat("Maitre du jeu","Aucun couple n'a été formé")
 
 class Voleur(Joueur):
+
+    """
+    Classe représentant un Voleur.
+
+    Attributs :
+        peut_voler (bool) : Indique si le voleur peut encore voler un rôle.
+
+    Méthodes :
+        voler_role(joueur) : Vole le rôle d'un joueur donné.
+    """
+    
     def __init__(self, nom):
         super().__init__(nom)
         self.role = "Voleur"
@@ -147,7 +243,40 @@ localPlayer = joueurs[0]
 
 
 class Cycle:
+
+    """
+    Classe représentant la gestion du cycle jour/nuit.
+
+    Attributs :
+        joueurs (list) : Liste des joueurs participant à la partie.
+        nuit_numero (int) : Compteur de tours de nuit.
+        amoureux (list) : Liste des joueurs amoureux.
+        voleur_role_choisi (bool) : Indique si le voleur a volé un rôle.
+        jour (bool) : Indique si c'est la phase de jour.
+        votes (list) : Liste des votes effectués.
+
+    Méthodes :
+        trouver_joueur(nom) : Trouve un joueur par son nom.
+        playerAlive() : Retourne la liste des joueurs vivants.
+        afficher_joueurs() : Met à jour l'interface avec les joueurs vivants.
+        chat(joueur, message) : Ajoute un message au chat.
+        vote() : Enregistre un vote contre un joueur.
+        phase_cupidon() : Exécute la phase où Cupidon lie des amoureux.
+        phase_voleur() : Exécute la phase où le Voleur vole un rôle.
+        tour_nuit() : Exécute un tour de nuit avec toutes les actions associées.
+        tour_jour() : Exécute un tour de jour avec toutes les actions associées.
+        lancer_cycle(tours) : Lance une série de tours jour/nuit.
+    """
+    
     def __init__(self, joueurs):
+    
+        """
+        Initialise un cycle de jeu.
+
+        Args:
+            joueurs (list) : Liste des joueurs participant à la partie.
+        """
+            
         self.joueurs = joueurs
         self.nuit_numero = 1
         self.amoureux = []
@@ -229,6 +358,16 @@ class Cycle:
             voleur.voler_role(voler)
 
     def tour_nuit(self):
+    
+    	"""
+    	Exécute un tour de nuit :
+    	- Les Loups-Garous choisissent une victime.
+    	- La Voyante sonde un joueur.
+    	- La Sorcière agit (potion de vie ou de mort).
+
+    	Met à jour les statuts des joueurs en fonction des actions effectuées.
+    	"""
+    
         self.jour = False
         self.chat("",f"\n--- Nuit {self.nuit_numero} ---\n")
 
@@ -296,6 +435,14 @@ class Cycle:
             self.chat("Maitre du jeu","Les villageois votent pour n'éliminer personne")
 
     def lancer_cycle(self, tours):
+    
+    	"""
+    	Lance une série de cycles jour/nuit.
+
+    	Args:
+        	tours (int) : Nombre total de cycles à exécuter.
+    	"""
+    	
         # Phase Cupidon avant la première nuit
         
         interface.updateList(joueurs)
