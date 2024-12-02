@@ -91,7 +91,7 @@ class Villageois(Joueur):
     
     def __init__(self, nom):
         super().__init__(nom)
-        self.role = "Villageois"
+        self.role = "Simple-Villageois"
 
 class Sorciere(Joueur):
 
@@ -229,7 +229,7 @@ joueurs = [
 ]
 vivants = joueurs
 
-localPlayer = joueurs[4]
+localPlayer = joueurs[0]
 
 
 
@@ -289,19 +289,26 @@ class Cycle:
                 vivants.append(joueur)
         interface.updateList(vivants)
 
-    def chat(self, joueur = localPlayer, message = ""):
+    def chat(self, joueur = localPlayer.nom, message = ""):
         chatGui = interface.chatHistory
         pos = chatGui.index("end")
-        if message == "":
-            message = interface.entryMessage.get()
-        if message != "":
-            chatGui.config(state='normal')
-            if joueur != "":         
-                chatGui.insert(pos ,joueur + " : " + message + "\n")
-            else:
-                chatGui.insert(pos , message + "\n")
-            chatGui.config(state='disabled')
-            chatGui.delete(0)
+        chatGui.config(state='normal')
+        if joueur == "Maitre du jeu":
+            chatGui.insert(pos ,joueur + " : " + message + "\n", 'MDJ')
+        else:
+            if message == "":
+                message = interface.entryMessage.get()
+            if message != "":
+                if joueur != "":
+                    if self.jour:         
+                        chatGui.insert(pos ,joueur + " : " + message + "\n")
+                    else:
+                        if self.trouver_joueur(joueur).role == "Loup-Garou":
+                            chatGui.insert(pos ,joueur + " : " + message + "\n", "Loup-Garou")
+                else:
+                    chatGui.insert(pos , message + "\n")
+        chatGui.config(state='disabled')
+        chatGui.delete(0)
                 
     def vote(self):
         if self.jour:
@@ -381,8 +388,6 @@ class Cycle:
             cible = self.trouver_joueur(interface.action(self.joueurs, "Voyante"))  #************************************
             voyante.sonder(cible, self)
 
-        loups[0].attaquer(villageois[0], self)
-        victime = villageois[0]
         # La Sorcière agit
         sorcieres = [j for j in self.joueurs if isinstance(j, Sorciere) and j.est_vivant]
         if sorcieres:

@@ -48,12 +48,8 @@ class mainInterface(tk.Tk):
         self.players = [playersList[i].nom for i in range(len(playersList))]
 
         self.roleActionFrame = tk.Frame(self, bg="#3396c7")
-        if self.role == "simple-villageois":
-            self.roleAction = tk.Label(self.roleActionFrame, text="PAS D'ACTION", font=("Arial", 14), bg="lightblue")
-            self.roleAction.pack()
-        else:
-            self.roleAction = tk.Listbox(self.roleActionFrame, height=25, width=40, selectmode="single")
-            self.roleAction.pack()
+        self.roleAction = tk.Listbox(self.roleActionFrame, height=25, width=40, selectmode="single")
+        self.roleAction.pack()
 
         self.frameChat.pack_propagate(False)
         self.frameChat.pack(side=tk.RIGHT, padx=10, pady=10, fill="y")
@@ -70,6 +66,9 @@ class mainInterface(tk.Tk):
         self.minsize(975,650)
 
         self.chatHistory.pack(expand="yes", fill="both")
+
+        self.chatHistory.tag_config("Loup-Garou", foreground="red")
+        self.chatHistory.tag_config("MDJ", foreground="purple")
 
         self.entryFrame.pack()
         self.entryMessage.pack(side='left')
