@@ -2,230 +2,21 @@
 import random
 import Interface
 import threading
+import Role
 
-
-# Classe de base Joueur
-class Joueur:
-
-    """
-    Classe de base représentant un joueur.
-
-    Attributs :
-        nom (str) : Nom du joueur.
-        est_vivant (bool) : Indique si le joueur est vivant.
-        role (str) : Rôle du joueur (par défaut, None).
-
-    Méthodes :
-        __str__() : Retourne une représentation textuelle du joueur.
-        mourir() : Marque le joueur comme mort et met à jour l'interface.
-    """
-    
-    def __init__(self, nom):
-    
-        """
-        Initialise un joueur.
-
-        Input:
-            nom (str) : Nom du joueur.
-        """
-        
-        self.nom = nom
-        self.est_vivant = True
-        self.role = None
-
-    def mourir(self, cycle):
-        self.est_vivant = False
-        cycle.chat("Maitre du jeu",f"{self.nom} ({self.role}) est mort.")
-        cycle.afficher_joueurs()
-
-
-# Classes spécifiques pour chaque rôle
-class LoupGarou(Joueur):
-
-    """
-    Classe représentant un Loup-Garou.
-
-    Méthodes :
-        attaquer(joueur) : Attaque un joueur donné.
-    """
-    
-    def __init__(self, nom):
-        super().__init__(nom)
-        self.role = "Loup-Garou"
-
-    def attaquer(self, joueur, cycle):
-        if joueur:
-            if joueur.est_vivant:
-                joueur.mourir(cycle)
-                cycle.chat("Maitre du jeu",f"{self.nom} (Loup-Garou) attaque {joueur.nom}.")
-        else:
-            cycle.chat("Maitre du jeu",f"{self.nom} (Loup-Garou) n'attaque pas.")
-                
-            
-class Voyante(Joueur):
-
-    """
-    Classe représentant une Voyante.
-
-    Méthodes :
-        sonder(joueur) : Découvre le rôle d'un joueur donné.
-    """
-    
-    def __init__(self, nom):
-        super().__init__(nom)
-        self.role = "Voyante"
-
-    def sonder(self, joueur, cycle):
-        if joueur:
-            cycle.chat("Maitre du jeu",f"{self.nom} (Voyante) sonde {joueur.nom}: {joueur.role}")
-        else:
-            cycle.chat("Maitre du jeu",f"{self.nom} (Voyante) ne sonde pas")
-            
-            
-class Villageois(Joueur):
-
-    """
-    Classe représentant un Villageois.
-    (Aucun pouvoir spécifique, rôle de base.)
-    """
-    
-    def __init__(self, nom):
-        super().__init__(nom)
-        self.role = "Simple-Villageois"
-
-class Sorciere(Joueur):
-
-    """
-    Classe représentant une Sorcière.
-
-    Attributs :
-        potion_vie (bool) : Indique si la potion de vie est disponible.
-        potion_mort (bool) : Indique si la potion de mort est disponible.
-
-    Méthodes :
-        sauver(joueur) : Utilise la potion de vie sur un joueur.
-        tuer(joueur) : Utilise la potion de mort sur un joueur.
-    """
-    
-    def __init__(self, nom):
-        super().__init__(nom)
-        self.role = "Sorcière"
-        self.potion_vie = True
-        self.potion_mort = True
-
-    def sauver(self, joueur, cycle):
-        if self.potion_vie:
-            joueur.est_vivant = True
-            cycle.chat("Maitre du jeu",f"{self.nom} (Sorcière) utilise la potion de vie sur {joueur.nom}.")
-            self.potion_vie = False
-
-    def tuer(self, joueur, cycle):
-        if self.potion_mort:
-            cycle.chat("Maitre du jeu",f"{self.nom} (Sorcière) utilise la potion de mort sur {joueur.nom}.")
-            joueur.mourir(cycle)
-            self.potion_mort = False
-
-class Chasseur(Joueur):
-
-    """
-    Classe représentant un Chasseur.
-
-    Méthodes :
-        tirer(cible) : Tire sur un joueur après sa mort.
-        mourir() : Redéfinition pour déclencher l'action de tir.
-    """
-    
-    def __init__(self, nom):
-        super().__init__(nom)
-        self.role = "Chasseur"
-
-    def tirer(self, cible,cycle):
-        if cible:
-            if self.est_vivant is False:  # Tirer après la mort
-                cycle.chat("Maitre du jeu",f"{self.nom} (Chasseur) tire sur {cible.nom}.")
-                cible.mourir(cycle)
-        else:
-            cycle.chat("Maitre du jeu","Le chasseur n'a pas tiré")
-    
-    def mourir(self, cycle):
-        super().mourir(cycle)
-        self.tirer(cycle.trouver_joueur(interface.action(cycle.playerAlive(),"Chasseur")), cycle)
-
-class Cupidon(Joueur):
-
-    """
-    Classe représentant Cupidon.
-
-    Attributs :
-        amoureux (list) : Liste des deux joueurs liés comme amoureux.
-
-    Méthodes :
-        lier_amoureux(joueur1, joueur2) : Lie deux joueurs comme amoureux.
-    """
-    
-    def __init__(self, nom):
-        super().__init__(nom)
-        self.role = "Cupidon"
-        self.amoureux = []  # Liste pour les amoureux
-
-    def lier_amoureux(self, joueur1, joueur2, cycle):
-
-        if joueur1 and joueur2:
-            self.amoureux = [joueur1, joueur2]
-            cycle.chat("Maitre du jeu",f"{self.nom} (Cupidon) lie {joueur1.nom} et {joueur2.nom} en tant qu'amoureux.")
-            # Ajoute une référence pour savoir s'ils sont amoureux
-            joueur1.amoureux = joueur2
-            joueur2.amoureux = joueur1
-        else:
-            cycle.chat("Maitre du jeu","Aucun couple n'a été formé")
-
-class Voleur(Joueur):
-
-    """
-    Classe représentant un Voleur.
-
-    Attributs :
-        peut_voler (bool) : Indique si le voleur peut encore voler un rôle.
-
-    Méthodes :
-        voler_role(joueur) : Vole le rôle d'un joueur donné.
-    """
-    
-    def __init__(self, nom):
-        super().__init__(nom)
-        self.role = "Voleur"
-        self.peut_voler = True  # Voleur peut voler une seule fois, durant la première nuit
-
-    def voler_role(self, joueur, cycle):
-        if not self.peut_voler:
-            cycle.chat("Maitre du jeu",f"{self.nom} ne peut plus voler de rôle.")
-            return
-        if joueur == None:
-            cycle.chat("Maitre du jeu","Aucun rôle n'a été volé.")
-            return
-
-        # Sélectionner aléatoirement un joueur dont le rôle va être volé
-        cycle.chat("Maitre du jeu",f"{self.nom} vole le rôle de {joueur.nom} qui était {joueur.role}.")
-
-        # Échange des rôles
-        ancien_role = joueur.role
-        joueur.role = "Voleur"  # La victime devient un Voleur sans la capacité de voler
-        self.role = ancien_role  # Le voleur prend le rôle de la victime
-        interface.changeImage(self.role)
-        self.peut_voler = False  # Désactiver la capacité de voler
 
 joueurs = [
-    LoupGarou("Lucien"),
-    LoupGarou("Adrien"),
-    LoupGarou("Emma"),
-    Voyante("Louis"),
-    Sorciere("Benjamin"),
-    Villageois("Charlotte"),
-    Villageois("Lilou"),
-    Villageois("Titouan"),
-    Chasseur("Victor"),
-    Cupidon("Kevin"),
-    Voleur("Romain")
+    Role.LoupGarou("Lucien"),
+    Role.LoupGarou("Adrien"),
+    Role.LoupGarou("Emma"),
+    Role.Voyante("Louis"),
+    Role.Sorciere("Benjamin"),
+    Role.Villageois("Charlotte"),
+    Role.Villageois("Lilou"),
+    Role.Villageois("Titouan"),
+    Role.Chasseur("Victor"),
+    Role.Cupidon("Kevin"),
+    Role.Voleur("Romain")
 ]
 vivants = joueurs
 
@@ -259,7 +50,7 @@ class Cycle:
         lancer_cycle(tours) : Lance une série de tours jour/nuit.
     """
     
-    def __init__(self, joueurs):
+    def __init__(self, joueurs, interface):
     
         """
         Initialise un cycle de jeu.
@@ -267,7 +58,7 @@ class Cycle:
         Args:
             joueurs (list) : Liste des joueurs participant à la partie.
         """
-            
+        self.interface = interface    
         self.joueurs = joueurs
         self.nuit_numero = 1
         self.amoureux = []
@@ -287,17 +78,17 @@ class Cycle:
         for joueur in self.joueurs:
             if joueur.est_vivant:
                 vivants.append(joueur)
-        interface.updateList(vivants)
+        self.interface.updateList(vivants)
 
     def chat(self, joueur = localPlayer.nom, message = ""):
-        chatGui = interface.chatHistory
+        chatGui = self.interface.chatHistory
         pos = chatGui.index("end")
         chatGui.config(state='normal')
         if joueur == "Maitre du jeu":
             chatGui.insert(pos ,joueur + " : " + message + "\n", 'MDJ')
         else:
             if message == "":
-                message = interface.entryMessage.get()
+                message = self.interface.entryMessage.get()
             if message != "":
                 if joueur != "":
                     if self.jour:         
@@ -312,25 +103,25 @@ class Cycle:
                 
     def vote(self):
         if self.jour:
-            if interface.listePlayers.curselection():
-                voted = interface.listePlayers.get(first=interface.listePlayers.curselection()[0])
-                interface.chatHistory.config(state='normal')
-                self.chat(interface.local.nom, "Je vote contre : " + voted)
-                interface.chatHistory.config(state='disabled')
+            if self.interface.listePlayers.curselection():
+                voted = self.interface.listePlayers.get(first=self.interface.listePlayers.curselection()[0])
+                self.interface.chatHistory.config(state='normal')
+                self.chat(self.interface.local.nom, "Je vote contre : " + voted)
+                self.interface.chatHistory.config(state='disabled')
                 self.votes.append(self.trouver_joueur(voted))
-                interface.listePlayers.selection_clear(0)
+                self.interface.listePlayers.selection_clear(0)
 
 
     def phase_cupidon(self):
         self.chat("Maitre du jeu","Tour du Cupidon")
         cupidon = None
         for j in self.joueurs:
-            if isinstance(j, Cupidon):
+            if isinstance(j, Role.Cupidon):
                 cupidon = j
                 break 
             
-        joueur1 = interface.action(joueurs, "Cupidon")
-        joueur2 = interface.action(joueurs, "Cupidon")
+        joueur1 = self.interface.action(joueurs, "Cupidon")
+        joueur2 = self.interface.action(joueurs, "Cupidon")
         if joueur1 and joueur2 and joueur1 != joueur2:
             joueur1 = self.trouver_joueur(joueur1)
             joueur2 = self.trouver_joueur(joueur2)
@@ -342,7 +133,7 @@ class Cycle:
         self.chat("Maitre du jeu","Tour du Voleur")
         voleur = None
         for j in self.joueurs:
-            if isinstance(j, Voleur) and j.peut_voler:
+            if isinstance(j, Role.Voleur) and j.peut_voler:
                 voleur = j
         if self.nuit_numero == 1:
             volable = []
@@ -350,7 +141,7 @@ class Cycle:
                 if i.role != "Voleur":
                     volable.append(i)
 
-            voler = interface.action(volable, "Voleur")
+            voler = self.interface.action(volable, "Voleur")
             voler = self.trouver_joueur(voler)
             voleur.voler_role(voler, self)
 
@@ -368,37 +159,37 @@ class Cycle:
 
 
         # Les Loups-Garous choisissent une victime
-        loups = [j for j in self.joueurs if isinstance(j, LoupGarou) and j.est_vivant]
-        villageois = [j for j in self.joueurs if not isinstance(j, LoupGarou) and j.est_vivant]
+        loups = [j for j in self.joueurs if isinstance(j, Role.LoupGarou) and j.est_vivant]
+        villageois = [j for j in self.joueurs if not isinstance(j, Role.LoupGarou) and j.est_vivant]
 
 
 
         victime = None
         
         if loups:
-            victime = interface.action(villageois, "Loup-Garou")   # choix des loupGarou ************************************
+            victime = self.interface.action(villageois, "Loup-Garou")   # choix des loupGarou ************************************
             victime = self.trouver_joueur(victime)
             for loup in loups:
                 loup.attaquer(victime, self)
 
         # La Voyante sonde un joueur
-        voyantes = [j for j in self.joueurs if isinstance(j, Voyante) and j.est_vivant]
+        voyantes = [j for j in self.joueurs if isinstance(j, Role.Voyante) and j.est_vivant]
         if voyantes:
             voyante = voyantes[0]
-            cible = self.trouver_joueur(interface.action(self.joueurs, "Voyante"))  #************************************
+            cible = self.trouver_joueur(self.interface.action(self.joueurs, "Voyante"))  #************************************
             voyante.sonder(cible, self)
 
         # La Sorcière agit
-        sorcieres = [j for j in self.joueurs if isinstance(j, Sorciere) and j.est_vivant]
+        sorcieres = [j for j in self.joueurs if isinstance(j, Role.Sorciere) and j.est_vivant]
         if sorcieres:
             sorciere = sorcieres[0]
             if victime:  #choix de la sorcière************************************
-                save = interface.action([victime], "Sorcière")
+                save = self.interface.action([victime], "Sorcière")
                 if save:
                     sorciere.sauver(victime, self)
                 
             
-            cible = interface.action([j for j in self.joueurs if j != sorciere], "Sorcière") #choix de la sorcière************************************
+            cible = self.interface.action([j for j in self.joueurs if j != sorciere], "Sorcière") #choix de la sorcière************************************
             if cible:
                 cible = self.trouver_joueur(cible)
                 sorciere.tuer(cible, self)  
@@ -420,7 +211,7 @@ class Cycle:
 
         self.afficher_joueurs()
 
-        interface.chronometre(30)
+        self.interface.chronometre(30)
         if self.votes:
             cible = self.votes[0]  #************************************
             self.chat("Maitre du jeu",f"Les villageois votent pour éliminer {cible.nom}.")
@@ -438,16 +229,16 @@ class Cycle:
 
         # Phase Cupidon avant la première nuit
 
-        interface.updateList(joueurs)
+        self.interface.updateList(joueurs)
         self.phase_cupidon()
         self.phase_voleur()
 
         for _ in range(tours):
             # Vérifier s'il reste des Loup-Garous vivants
-            loups_restants = any(isinstance(j, LoupGarou) and j.est_vivant for j in self.joueurs)
+            loups_restants = any(isinstance(j, Role.LoupGarou) and j.est_vivant for j in self.joueurs)
             
             # Vérifier s'il reste des Villageois vivants
-            villageois_restants = any(not isinstance(j, LoupGarou) and j.est_vivant for j in self.joueurs)
+            villageois_restants = any(not isinstance(j, Role.LoupGarou) and j.est_vivant for j in self.joueurs)
     
             if loups_restants and villageois_restants:
                 self.tour_nuit()
@@ -470,14 +261,14 @@ class Cycle:
 # Création du cycle
 
 
-
-jeu = Cycle(joueurs)
-
-
 interface = Interface.mainInterface(joueurs, localPlayer) 
 
+
+jeu = Cycle(joueurs, interface)
 interface.sendVote.configure(command=jeu.vote)
 interface.sendChat.configure(command=jeu.chat)
+
+
 
 # Lancer le cycle jour/nuit pour 10 tours
 t = threading.Thread(target=jeu.lancer_cycle, args=[10])
