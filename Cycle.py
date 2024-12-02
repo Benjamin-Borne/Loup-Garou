@@ -229,7 +229,7 @@ joueurs = [
 ]
 vivants = joueurs
 
-localPlayer = joueurs[0]
+localPlayer = joueurs[4]
 
 
 
@@ -367,6 +367,7 @@ class Cycle:
 
 
         victime = None
+        
         if loups:
             victime = interface.action(villageois, "Loup-Garou")   # choix des loupGarou ************************************
             victime = self.trouver_joueur(victime)
@@ -379,22 +380,23 @@ class Cycle:
             voyante = voyantes[0]
             cible = self.trouver_joueur(interface.action(self.joueurs, "Voyante"))  #************************************
             voyante.sonder(cible, self)
-        
+
+        loups[0].attaquer(villageois[0], self)
+        victime = villageois[0]
         # La Sorcière agit
         sorcieres = [j for j in self.joueurs if isinstance(j, Sorciere) and j.est_vivant]
         if sorcieres:
             sorciere = sorcieres[0]
-            
             if victime:  #choix de la sorcière************************************
-                save = interface.action(["Sauver", "Ne pas sauver"], "Sorcière")
-                if save == "Sauver":
-                    sorciere.sauver(victime)
+                save = interface.action([victime], "Sorcière")
+                if save:
+                    sorciere.sauver(victime, self)
                 
-            else:
-                cible = interface.action([j for j in self.joueurs if j != sorciere], "Sorcière") #choix de la sorcière************************************
-                if cible:
-                    cible = self.trouver_joueur(cible)
-                    sorciere.tuer(cible, self)  
+            
+            cible = interface.action([j for j in self.joueurs if j != sorciere], "Sorcière") #choix de la sorcière************************************
+            if cible:
+                cible = self.trouver_joueur(cible)
+                sorciere.tuer(cible, self)  
 
         self.nuit_numero += 1
 

@@ -190,7 +190,7 @@ class mainInterface(tk.Tk):
         """
             
         if roleName == self.role:
-            aPlayers = [affectedPlayers[i].nom for i in range(len(affectedPlayers))]
+            aPlayers = [affectedPlayers[i].nom for i in range(len(affectedPlayers))] + ["Ne rien faire"]
             self.roleAction.delete(0, self.listePlayers.size())
             for player in aPlayers:
                 self.roleAction.insert(tk.END, player)
@@ -215,6 +215,8 @@ class mainInterface(tk.Tk):
             if self.roleAction.curselection():
                 player = self.roleAction.get(first=self.roleAction.curselection()[0])
                 self.roleAction.pack_forget()
+                if player == "Ne rien faire":
+                    return None
                 return player
         self.roleAction.pack_forget()
         return None       
