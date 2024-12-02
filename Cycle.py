@@ -4,25 +4,7 @@ import Interface
 import threading
 import Role
 
-
-joueurs = [
-    Role.LoupGarou("Lucien"),
-    Role.LoupGarou("Adrien"),
-    Role.LoupGarou("Emma"),
-    Role.Voyante("Louis"),
-    Role.Sorciere("Benjamin"),
-    Role.Villageois("Charlotte"),
-    Role.Villageois("Lilou"),
-    Role.Villageois("Titouan"),
-    Role.Chasseur("Victor"),
-    Role.Cupidon("Kevin"),
-    Role.Voleur("Romain")
-]
-vivants = joueurs
-
-localPlayer = joueurs[0]
-
-
+localPlayer = 0
 
 class Cycle:
 
@@ -60,6 +42,7 @@ class Cycle:
         """
         self.interface = interface    
         self.joueurs = joueurs
+        self.localPlayer = self.joueurs[localPlayer] #à modifier
         self.nuit_numero = 1
         self.amoureux = []
         self.voleur_role_choisi = False
@@ -80,7 +63,9 @@ class Cycle:
                 vivants.append(joueur)
         self.interface.updateList(vivants)
 
-    def chat(self, joueur = localPlayer.nom, message = ""):
+    def chat(self, joueur = None, message = ""):
+        if joueur is None:
+            joueur = self.localPlayer.nom
         chatGui = self.interface.chatHistory
         pos = chatGui.index("end")
         chatGui.config(state='normal')
@@ -120,8 +105,8 @@ class Cycle:
                 cupidon = j
                 break 
             
-        joueur1 = self.interface.action(joueurs, "Cupidon")
-        joueur2 = self.interface.action(joueurs, "Cupidon")
+        joueur1 = self.interface.action(self.joueurs, "Cupidon")
+        joueur2 = self.interface.action(self.joueurs, "Cupidon")
         if joueur1 and joueur2 and joueur1 != joueur2:
             joueur1 = self.trouver_joueur(joueur1)
             joueur2 = self.trouver_joueur(joueur2)
@@ -229,7 +214,7 @@ class Cycle:
 
         # Phase Cupidon avant la première nuit
 
-        self.interface.updateList(joueurs)
+        self.interface.updateList(self.joueurs)
         self.phase_cupidon()
         self.phase_voleur()
 
@@ -259,9 +244,24 @@ class Cycle:
 
 #joueurs = création_des_joueurs(11)
 # Création du cycle
+joueurs = [
+    Role.LoupGarou("Lucien"),
+    Role.LoupGarou("Adrien"),
+    Role.LoupGarou("Emma"),
+    Role.Voyante("Louis"),
+    Role.Sorciere("Benjamin"),
+    Role.Villageois("Charlotte"),
+    Role.Villageois("Lilou"),
+    Role.Villageois("Titouan"),
+    Role.Chasseur("Victor"),
+    Role.Cupidon("Kevin"),
+    Role.Voleur("Romain")
+]
+vivants = joueurs
 
 
-interface = Interface.mainInterface(joueurs, localPlayer) 
+
+interface = Interface.mainInterface(joueurs, joueurs[localPlayer]) 
 
 
 jeu = Cycle(joueurs, interface)
