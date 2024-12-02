@@ -33,19 +33,10 @@ class Joueur:
         self.est_vivant = True
         self.role = None
 
-    def __str__(self):
-    
-	"""
-	Output:
-		(str) : nom et rôle du joueur.
-	"""
-	   
-        return f"{self.nom} ({self.role})"
-
-    def mourir(self):
+    def mourir(self, cycle):
         self.est_vivant = False
-        jeu.chat("Maitre du jeu",f"{self.nom} ({self.role}) est mort.")
-        jeu.afficher_joueurs()
+        cycle.chat("Maitre du jeu",f"{self.nom} ({self.role}) est mort.")
+        cycle.afficher_joueurs()
 
 
 # Classes spécifiques pour chaque rôle
@@ -62,13 +53,13 @@ class LoupGarou(Joueur):
         super().__init__(nom)
         self.role = "Loup-Garou"
 
-    def attaquer(self, joueur):
+    def attaquer(self, joueur, cycle):
         if joueur:
             if joueur.est_vivant:
-                joueur.mourir()
-                jeu.chat("Maitre du jeu",f"{self.nom} (Loup-Garou) attaque {joueur.nom}.")
+                joueur.mourir(cycle)
+                cycle.chat("Maitre du jeu",f"{self.nom} (Loup-Garou) attaque {joueur.nom}.")
         else:
-            jeu.chat("Maitre du jeu",f"{self.nom} (Loup-Garou) n'attaque pas.")
+            cycle.chat("Maitre du jeu",f"{self.nom} (Loup-Garou) n'attaque pas.")
                 
             
 class Voyante(Joueur):
@@ -84,11 +75,11 @@ class Voyante(Joueur):
         super().__init__(nom)
         self.role = "Voyante"
 
-    def sonder(self, joueur):
+    def sonder(self, joueur, cycle):
         if joueur:
-            jeu.chat("Maitre du jeu",f"{self.nom} (Voyante) sonde {joueur.nom}: {joueur.role}")
+            cycle.chat("Maitre du jeu",f"{self.nom} (Voyante) sonde {joueur.nom}: {joueur.role}")
         else:
-            jeu.chat("Maitre du jeu",f"{self.nom} (Voyante) ne sonde pas")
+            cycle.chat("Maitre du jeu",f"{self.nom} (Voyante) ne sonde pas")
             
             
 class Villageois(Joueur):
@@ -122,16 +113,16 @@ class Sorciere(Joueur):
         self.potion_vie = True
         self.potion_mort = True
 
-    def sauver(self, joueur):
+    def sauver(self, joueur, cycle):
         if self.potion_vie:
             joueur.est_vivant = True
-            jeu.chat("Maitre du jeu",f"{self.nom} (Sorcière) utilise la potion de vie sur {joueur.nom}.")
+            cycle.chat("Maitre du jeu",f"{self.nom} (Sorcière) utilise la potion de vie sur {joueur.nom}.")
             self.potion_vie = False
 
-    def tuer(self, joueur):
+    def tuer(self, joueur, cycle):
         if self.potion_mort:
-            jeu.chat("Maitre du jeu",f"{self.nom} (Sorcière) utilise la potion de mort sur {joueur.nom}.")
-            joueur.mourir()
+            cycle.chat("Maitre du jeu",f"{self.nom} (Sorcière) utilise la potion de mort sur {joueur.nom}.")
+            joueur.mourir(cycle)
             self.potion_mort = False
 
 class Chasseur(Joueur):
@@ -148,17 +139,17 @@ class Chasseur(Joueur):
         super().__init__(nom)
         self.role = "Chasseur"
 
-    def tirer(self, cible):
+    def tirer(self, cible,cycle):
         if cible:
             if self.est_vivant is False:  # Tirer après la mort
-                jeu.chat("Maitre du jeu",f"{self.nom} (Chasseur) tire sur {cible.nom}.")
-                cible.mourir()
+                cycle.chat("Maitre du jeu",f"{self.nom} (Chasseur) tire sur {cible.nom}.")
+                cible.mourir(cycle)
         else:
-            jeu.chat("Maitre du jeu","Le chasseur n'a pas tiré")
+            cycle.chat("Maitre du jeu","Le chasseur n'a pas tiré")
     
-    def mourir(self):
-        super().mourir()
-        self.tirer(jeu.trouver_joueur(interface.action(jeu.playerAlive(),"Chasseur")))
+    def mourir(self, cycle):
+        super().mourir(cycle)
+        self.tirer(cycle.trouver_joueur(interface.action(cycle.playerAlive(),"Chasseur")), cycle)
 
 class Cupidon(Joueur):
 
@@ -177,16 +168,16 @@ class Cupidon(Joueur):
         self.role = "Cupidon"
         self.amoureux = []  # Liste pour les amoureux
 
-    def lier_amoureux(self, joueur1, joueur2):
+    def lier_amoureux(self, joueur1, joueur2, cycle):
 
         if joueur1 and joueur2:
             self.amoureux = [joueur1, joueur2]
-            jeu.chat("Maitre du jeu",f"{self.nom} (Cupidon) lie {joueur1.nom} et {joueur2.nom} en tant qu'amoureux.")
+            cycle.chat("Maitre du jeu",f"{self.nom} (Cupidon) lie {joueur1.nom} et {joueur2.nom} en tant qu'amoureux.")
             # Ajoute une référence pour savoir s'ils sont amoureux
             joueur1.amoureux = joueur2
             joueur2.amoureux = joueur1
         else:
-            jeu.chat("Maitre du jeu","Aucun couple n'a été formé")
+            cycle.chat("Maitre du jeu","Aucun couple n'a été formé")
 
 class Voleur(Joueur):
 
@@ -205,16 +196,16 @@ class Voleur(Joueur):
         self.role = "Voleur"
         self.peut_voler = True  # Voleur peut voler une seule fois, durant la première nuit
 
-    def voler_role(self, joueur):
+    def voler_role(self, joueur, cycle):
         if not self.peut_voler:
-            jeu.chat("Maitre du jeu",f"{self.nom} ne peut plus voler de rôle.")
+            cycle.chat("Maitre du jeu",f"{self.nom} ne peut plus voler de rôle.")
             return
         if joueur == None:
-            jeu.chat("Maitre du jeu","Aucun rôle n'a été volé.")
+            cycle.chat("Maitre du jeu","Aucun rôle n'a été volé.")
             return
 
         # Sélectionner aléatoirement un joueur dont le rôle va être volé
-        jeu.chat("Maitre du jeu",f"{self.nom} vole le rôle de {joueur.nom} qui était {joueur.role}.")
+        cycle.chat("Maitre du jeu",f"{self.nom} vole le rôle de {joueur.nom} qui était {joueur.role}.")
 
         # Échange des rôles
         ancien_role = joueur.role
@@ -334,9 +325,9 @@ class Cycle:
         joueur1 = interface.action(joueurs, "Cupidon")
         joueur2 = interface.action(joueurs, "Cupidon")
         if joueur1 and joueur2 and joueur1 != joueur2:
-            joueur1 = jeu.trouver_joueur(joueur1)
-            joueur2 = jeu.trouver_joueur(joueur2)
-            cupidon.lier_amoureux(joueur1, joueur2)
+            joueur1 = self.trouver_joueur(joueur1)
+            joueur2 = self.trouver_joueur(joueur2)
+            cupidon.lier_amoureux(joueur1, joueur2, self)
             self.amoureux = [joueur1, joueur2]
         
         
@@ -346,7 +337,6 @@ class Cycle:
         for j in self.joueurs:
             if isinstance(j, Voleur) and j.peut_voler:
                 voleur = j
-                break
         if self.nuit_numero == 1:
             volable = []
             for i in self.joueurs:
@@ -355,43 +345,40 @@ class Cycle:
 
             voler = interface.action(volable, "Voleur")
             voler = self.trouver_joueur(voler)
-            voleur.voler_role(voler)
+            voleur.voler_role(voler, self)
 
     def tour_nuit(self):
-    
-    	"""
-    	Exécute un tour de nuit :
-    	- Les Loups-Garous choisissent une victime.
-    	- La Voyante sonde un joueur.
-    	- La Sorcière agit (potion de vie ou de mort).
+        """
+        Exécute un tour de nuit :
+        - Les Loups-Garous choisissent une victime.
+        - La Voyante sonde un joueur.
+        - La Sorcière agit (potion de vie ou de mort).
 
-    	Met à jour les statuts des joueurs en fonction des actions effectuées.
-    	"""
-    
+        Met à jour les statuts des joueurs en fonction des actions effectuées.
+        """
         self.jour = False
         self.chat("",f"\n--- Nuit {self.nuit_numero} ---\n")
 
-        
+
         # Les Loups-Garous choisissent une victime
         loups = [j for j in self.joueurs if isinstance(j, LoupGarou) and j.est_vivant]
         villageois = [j for j in self.joueurs if not isinstance(j, LoupGarou) and j.est_vivant]
 
 
-        
+
         victime = None
         if loups:
             victime = interface.action(villageois, "Loup-Garou")   # choix des loupGarou ************************************
             victime = self.trouver_joueur(victime)
             for loup in loups:
-                #loup.attaquer(victime)
-                loup.attaquer(villageois[0])
+                loup.attaquer(victime, self)
 
         # La Voyante sonde un joueur
         voyantes = [j for j in self.joueurs if isinstance(j, Voyante) and j.est_vivant]
         if voyantes:
             voyante = voyantes[0]
             cible = self.trouver_joueur(interface.action(self.joueurs, "Voyante"))  #************************************
-            voyante.sonder(cible)
+            voyante.sonder(cible, self)
         
         # La Sorcière agit
         sorcieres = [j for j in self.joueurs if isinstance(j, Sorciere) and j.est_vivant]
@@ -406,8 +393,8 @@ class Cycle:
             else:
                 cible = interface.action([j for j in self.joueurs if j != sorciere], "Sorcière") #choix de la sorcière************************************
                 if cible:
-                    cible = jeu.trouver_joueur(cible)
-                    sorciere.tuer(cible)  
+                    cible = self.trouver_joueur(cible)
+                    sorciere.tuer(cible, self)  
 
         self.nuit_numero += 1
 
@@ -421,7 +408,7 @@ class Cycle:
             if not amoureux.est_vivant and variable_anti_mess_double==0:
                 variable_anti_mess_double=-1
                 self.chat("Maitre du jeu",f"{amoureux.nom} meurt, donc son amoureux {amoureux.amoureux.nom} se suicide.")
-                amoureux.amoureux.mourir()
+                amoureux.amoureux.mourir(self)
         
 
         self.afficher_joueurs()
@@ -430,21 +417,20 @@ class Cycle:
         if self.votes:
             cible = self.votes[0]  #************************************
             self.chat("Maitre du jeu",f"Les villageois votent pour éliminer {cible.nom}.")
-            cible.mourir()
+            cible.mourir(self)
         else:
             self.chat("Maitre du jeu","Les villageois votent pour n'éliminer personne")
 
     def lancer_cycle(self, tours):
-    
-    	"""
-    	Lance une série de cycles jour/nuit.
+        """
+        Lance une série de cycles jour/nuit.
 
-    	Args:
-        	tours (int) : Nombre total de cycles à exécuter.
-    	"""
-    	
+        Args:
+            tours (int) : Nombre total de cycles à exécuter.
+        """
+
         # Phase Cupidon avant la première nuit
-        
+
         interface.updateList(joueurs)
         self.phase_cupidon()
         self.phase_voleur()
