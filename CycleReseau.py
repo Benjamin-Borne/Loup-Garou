@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-import random
 import Interface
 import threading
+import random
 import Role
-
-localPlayer = 0
+import Composition
+#import Serveur
 
 class Cycle:
 
@@ -15,7 +14,6 @@ class Cycle:
         joueurs (list) : Liste des joueurs participant à la partie.
         nuit_numero (int) : Compteur de tours de nuit.
         amoureux (list) : Liste des joueurs amoureux.
-        voleur_role_choisi (bool) : Indique si le voleur a volé un rôle.
         jour (bool) : Indique si c'est la phase de jour.
         votes (list) : Liste des votes effectués.
 
@@ -32,103 +30,90 @@ class Cycle:
         lancer_cycle(tours) : Lance une série de tours jour/nuit.
     """
     
-    def __init__(self, joueurs, interface):
+    def __init__(self):
     
         """
         Initialise un cycle de jeu.
 
         Args:
             joueurs (list) : Liste des joueurs participant à la partie.
-        """
-        self.interface = interface    
-        self.joueurs = joueurs
-        self.localPlayer = self.joueurs[localPlayer] #à modifier
-        self.nuit_numero = 1
-        self.amoureux = []
-        self.voleur_role_choisi = False
+        """ 
+        self.IPjoueurs = Reseau.serveur.getClients()
+        self.pseudo = Reseau.client.pseudo()
+        self.role = Composition.createComp(len(self.pseudo))
+
+
+        players = random.shuffle(self.pseudo[:])
+        for i in range(len(players)):
+            self.role[i].nom = players[i]
+            self.role[i].ip = self.IPjoueurs[i]
+            #Set up client
+
+        self.nuit_numero = 0
+
         self.jour = False
+
+        self.amoureux = []
         self.votes = []
         
     def trouver_joueur(self,nom):
-        for joueur in self.joueurs:
+        for joueur in self.role:
             if joueur.nom == nom:
                 return joueur
+
     def playerAlive(self):
-        return [joueur for joueur in self.joueurs if joueur.est_vivant]
-
-    def afficher_joueurs(self):
-        vivants = []
-        for joueur in self.joueurs:
-            if joueur.est_vivant:
-                vivants.append(joueur)
-        self.interface.updateList(vivants)
-
-    def chat(self, joueur = None, message = ""):
-        if joueur is None:
-            joueur = self.localPlayer.nom
-        chatGui = self.interface.chatHistory
-        pos = chatGui.index("end")
-        chatGui.config(state='normal')
-        if joueur == "Maitre du jeu":
-            chatGui.insert(pos ,joueur + " : " + message + "\n", 'MDJ')
-        else:
-            if message == "":
-                message = self.interface.entryMessage.get()
-            if message != "":
-                if joueur != "":
-                    if self.jour:         
-                        chatGui.insert(pos ,joueur + " : " + message + "\n")
-                    else:
-                        if self.trouver_joueur(joueur).role == "Loup-Garou":
-                            chatGui.insert(pos ,joueur + " : " + message + "\n", "Loup-Garou")
-                else:
-                    chatGui.insert(pos , message + "\n")
-        chatGui.config(state='disabled')
-        chatGui.delete(0)
-                
-    def vote(self):
-        if self.jour:
-            if self.interface.listePlayers.curselection():
-                voted = self.interface.listePlayers.get(first=self.interface.listePlayers.curselection()[0])
-                self.interface.chatHistory.config(state='normal')
-                self.chat(self.interface.local.nom, "Je vote contre : " + voted)
-                self.interface.chatHistory.config(state='disabled')
-                self.votes.append(self.trouver_joueur(voted))
-                self.interface.listePlayers.selection_clear(0)
-
+        return [joueur for joueur in self.role if joueur.est_vivant]
+    
 
     def phase_cupidon(self):
-        self.chat("Maitre du jeu","Tour du Cupidon")
-        cupidon = None
-        for j in self.joueurs:
+        for j in self.role:
             if isinstance(j, Role.Cupidon):
                 cupidon = j
-                break 
-            
-        joueur1 = self.interface.action(self.joueurs, "Cupidon")
-        joueur2 = self.interface.action(self.joueurs, "Cupidon")
+        
+        
+        #Afficher message
+        """
+        format message:
+                        #pseudo$data@typeAction
+        """
+        Reseau.serveur.broadcast("message", serveur_socket)
+        #Cupidon choisis
+        Reseau.serveur.send("CupidonChoix",cupidon.ip, serveur_socket)
+        joueur1, joueur2 = server.handleClient(), server.handleClient()
+        
+
         if joueur1 and joueur2 and joueur1 != joueur2:
-            joueur1 = self.trouver_joueur(joueur1)
-            joueur2 = self.trouver_joueur(joueur2)
-            cupidon.lier_amoureux(joueur1, joueur2, self)
-            self.amoureux = [joueur1, joueur2]
+            #serveur traite
+            self.amoureux = [self.trouver_joueur(joueur1), self.trouver_joueur(joueur2)]
+            #Message aux amoureux
+            Reseau.serveur.send("T amoureux", self.amoureux[0].ip, serveur_socket)
+            Reseau.serveur.send("Toi aussi lol", self.amoureux[1].ip, serveur_socket)
+            Reseau.serveur.send("GG t'as fait un couple",cupidon.ip, serveur_socket)
+        else:
+            Reseau.serveur.send("Miskin y'a pas de couple",cupidon.ip, serveur_socket)
         
         
     def phase_voleur(self):
-        self.chat("Maitre du jeu","Tour du Voleur")
-        voleur = None
-        for j in self.joueurs:
-            if isinstance(j, Role.Voleur) and j.peut_voler:
-                voleur = j
+        Reseau.serveur.broadcast("message", serveur_socket)
+        for player in self.role:
+            if isinstance(player, Role.Voleur) and player.peut_voler:
+                voleur = player
         if self.nuit_numero == 1:
             volable = []
-            for i in self.joueurs:
-                if i.role != "Voleur":
-                    volable.append(i)
+            for player in self.role:
+                if player.role != "Voleur":
+                    volable.append(player)
 
-            voler = self.interface.action(volable, "Voleur")
-            voler = self.trouver_joueur(voler)
-            voleur.voler_role(voler, self)
+            Reseau.serveur.broadcast("message", serveur_socket)
+            Reseau.serveur.send("VoleurChoix",voleur.ip, serveur_socket)
+
+            vole = server.handleClient()
+            if vole:
+                vole = self.trouver_joueur(vole)
+                voleur.voler_role(vole)
+                #Debrouiller pour changer image
+                Reseau.serveur.send("T'as volé (changer image)",voleur.ip, serveur_socket)
+                Reseau.serveur.send("T'as été volé (changer image)",vole.ip, serveur_socket)
 
     def tour_nuit(self):
         """
@@ -140,29 +125,29 @@ class Cycle:
         Met à jour les statuts des joueurs en fonction des actions effectuées.
         """
         self.jour = False
-        self.chat("",f"\n--- Nuit {self.nuit_numero} ---\n")
-
+        Reseau.serveur.broadcast("Nuit X", serveur_socket)
 
         # Les Loups-Garous choisissent une victime
-        loups = [j for j in self.joueurs if isinstance(j, Role.LoupGarou) and j.est_vivant]
-        villageois = [j for j in self.joueurs if not isinstance(j, Role.LoupGarou) and j.est_vivant]
-
-
-
+        loups = [j for j in self.role if isinstance(j, Role.LoupGarou) and j.est_vivant]
+        villageois = [j for j in self.role if not isinstance(j, Role.LoupGarou) and j.est_vivant]
         victime = None
-        
-        if loups:
-            victime = self.interface.action(villageois, "Loup-Garou")   # choix des loupGarou ************************************
-            victime = self.trouver_joueur(victime)
-            for loup in loups:
-                loup.attaquer(victime, self)
+
+        #A faire ps c comme les votes
+        victime = self.interface.action(villageois, "Loup-Garou")   # choix des loupGarou ************************************
+        victime = self.trouver_joueur(victime)
+        for loup in loups:
+            loup.attaquer(victime, self)
 
         # La Voyante sonde un joueur
         voyantes = [j for j in self.joueurs if isinstance(j, Role.Voyante) and j.est_vivant]
         if voyantes:
+            Reseau.serveur.broadcast("Tour de la Vovo", serveur_socket)
             voyante = voyantes[0]
-            cible = self.trouver_joueur(self.interface.action(self.joueurs, "Voyante"))  #************************************
-            voyante.sonder(cible, self)
+            Reseau.serveur.send("Role à voir",voyante.ip, serveur_socket)
+            vu = server.handleClient()
+            vu = self.trouver_joueur(vu)
+            Reseau.serveur.send("Le role en question ct :" + vu.role ,voyante.ip, serveur_socket)
+
 
         # La Sorcière agit
         sorcieres = [j for j in self.joueurs if isinstance(j, Role.Sorciere) and j.est_vivant]
@@ -232,46 +217,7 @@ class Cycle:
     
             elif not villageois_restants:
                 self.chat("Maitre du jeu","Les Loup-Garous ont gagné !")
-                break
     
             elif not loups_restants:
                 self.chat("Maitre du jeu","Les villageois ont gagné !")
-                break
         self.chat("Maitre du jeu","La Partie est terminé, gg!")
-
-
-
-
-#joueurs = création_des_joueurs(11)
-# Création du cycle
-joueurs = [
-    Role.LoupGarou("Lucien"),
-    Role.LoupGarou("Adrien"),
-    Role.LoupGarou("Emma"),
-    Role.Voyante("Louis"),
-    Role.Sorciere("Benjamin"),
-    Role.Villageois("Charlotte"),
-    Role.Villageois("Lilou"),
-    Role.Villageois("Titouan"),
-    Role.Chasseur("Victor"),
-    Role.Cupidon("Kevin"),
-    Role.Voleur("Romain")
-]
-vivants = joueurs
-
-
-
-interface = Interface.mainInterface(joueurs, joueurs[localPlayer]) 
-
-
-jeu = Cycle(joueurs, interface)
-interface.sendVote.configure(command=jeu.vote)
-interface.sendChat.configure(command=jeu.chat)
-
-
-
-# Lancer le cycle jour/nuit pour 10 tours
-t = threading.Thread(target=jeu.lancer_cycle, args=[10])
-t.start()
-test = threading.Thread(target=interface.mainloop)
-test.run()
