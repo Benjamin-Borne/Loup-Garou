@@ -42,12 +42,11 @@ class Cycle:
         self.pseudo = Reseau.client.pseudo()
         self.role = Composition.createComp(len(self.pseudo))
 
-
-        players = random.shuffle(self.pseudo[:])
-        for i in range(len(players)):
-            self.role[i].nom = players[i]
-            self.role[i].ip = self.IPjoueurs[i]
-            #Set up client
+	#affectation aléatoire des rôles
+	for i in range(len(self.role)):
+	    self.role[i].nom = self.pseudo[i]
+	    
+		
 
         self.nuit_numero = 0
 
