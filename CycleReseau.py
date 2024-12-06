@@ -3,7 +3,9 @@ import threading
 import random
 import Role
 import Composition
-#import Serveur
+import server
+import ast
+
 
 class Cycle:
 
@@ -38,11 +40,13 @@ class Cycle:
         Args:
             joueurs (list) : Liste des joueurs participant à la partie.
         """ 
-        self.IPjoueurs = Reseau.serveur.getClients()
-        self.pseudo = Reseau.client.pseudo()
-        self.role = Composition.createComp(len(self.pseudo))
-
+        self.serveur = server.ChatServer()
+        self.players = self.serveure.getClients() #Socket des joueurs (à ne pas toucher)
+        self.pseudo = self.serveur.getPseudo() #Pseudo des joueurs (à ne pas toucher)
+	
+	
 	#affectation aléatoire des rôles
+	self.role = Composition.createComp(len(self.players))
 	for i in range(len(self.role)):
 	    self.role[i].nom = self.pseudo[i]
 	    
@@ -54,7 +58,7 @@ class Cycle:
 
         self.amoureux = []
         self.votes = []
-        
+    	   
     def trouver_joueur(self,nom):
         for joueur in self.role:
             if joueur.nom == nom:
@@ -63,8 +67,21 @@ class Cycle:
     def playerAlive(self):
         return [joueur for joueur in self.role if joueur.est_vivant]
     
-
+    def nuit1(self):
+    	
+    	self.phase_cupidon()
+    	self.phase_voleur()
+    
+    
+    
+    
+    
     def phase_cupidon(self):
+    
+    """
+    	Fonction permettant d'effectuer la création du couple.
+    """
+    
         for j in self.role:
             if isinstance(j, Role.Cupidon):
                 cupidon = j
@@ -73,23 +90,27 @@ class Cycle:
         #Afficher message
         """
         format message:
-                        #pseudo$data@typeAction
+                        destination$data@typeAction
         """
-        Reseau.serveur.broadcast("message", serveur_socket)
+        
+        message = "all$Cupidon choisi les amoureux.".encode('utf-8')
+        self.serveur.broadcast(message, "") #Envoie du message à tous les joueurs.
+        
         #Cupidon choisis
-        Reseau.serveur.send("CupidonChoix",cupidon.ip, serveur_socket)
-        joueur1, joueur2 = server.handleClient(), server.handleClient()
+        cupidon_socket = self.players[self.pseudo.indexof(cupidon.nom)]
+        serveur.send("CCUP$Sélectionne deux amoureux.".encode('utf-8'), cupidon_socket)
+        response = cupidon.recv(1024).decode('utf-8') #réponse de la forme "['pseudo1', 'pseudo2']" (type str)
+        joueur1, joueur2 = ast.litteral_eval(response)[0], ast.litteral_eval(response)[1] #retransformation en liste puis récupération des pseudos
         
 
         if joueur1 and joueur2 and joueur1 != joueur2:
-            #serveur traite
             self.amoureux = [self.trouver_joueur(joueur1), self.trouver_joueur(joueur2)]
             #Message aux amoureux
-            Reseau.serveur.send("T amoureux", self.amoureux[0].ip, serveur_socket)
-            Reseau.serveur.send("Toi aussi lol", self.amoureux[1].ip, serveur_socket)
-            Reseau.serveur.send("GG t'as fait un couple",cupidon.ip, serveur_socket)
+            serveur.send(f"Tu es amoureux avec {self.amoureux[1].nom}".encode('utf-8'), self.players[self.pseudo.indexof(self.amoureux[0].nom)
+            serveur.send(f"Tu es amoureux avec {self.amoureux[0].nom}".encode('utf-8'), self.players[self.pseudo.indexof(self.amoureux[1].nom)
+            serveur.send("Le couple est formé".encode('utf-8'),cupidon_socket)
         else:
-            Reseau.serveur.send("Miskin y'a pas de couple",cupidon.ip, serveur_socket)
+            serveur.send("Aucun couple n'a été formé",cupidon_socket)
         
         
     def phase_voleur(self):
@@ -220,3 +241,5 @@ class Cycle:
             elif not loups_restants:
                 self.chat("Maitre du jeu","Les villageois ont gagné !")
         self.chat("Maitre du jeu","La Partie est terminé, gg!")
+        
+        
