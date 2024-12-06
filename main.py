@@ -8,24 +8,38 @@ import CycleReseau
 
 def new_game():
 	
-	MyIP = server.get_ip()
-	port = 5000
-	key = server.keyGen(MyIP)
+	"""
+		Fonction permettant de créer une partie.
+	"""
+	ip = server.get_ip()
+	key = server.keygen()
+	MySock = server.ChatServer(ip, 5000)
 	
-	my_socket = server.MySocket()
-	my_socket.start_server()
+	MySock.start()
 	
 
 	
 def join_game(key: str):
 	
-	ServerIp = server.decode_keygen(key)
-	port = 5000
+	"""
+		Fonction permettant de rejoindre une partie.
+		inputs:
+			key (str): clé de connection au serveur
+			username (str): nom d'utilisateur du joueur
+	"""
+	server_ip = server.keygenRev(key)
+	new_client = client.MyClient(username, server_ip)
 	
-	cycle_client.start_client()
+	new_client.start_client()
 	
 	
 def deroulement_party():
+
+
+
+	"""
+		Fonction du déroulement de la partie. Lancée une fois la partie initialisée.
+	"""
 
 	player = NewPlayer(username)
 	

@@ -1,5 +1,6 @@
 import socket
 import threading
+import base64
 
 def get_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -12,6 +13,13 @@ def get_ip():
     finally:
         s.close()
     return ip
+    
+    
+def keygen(chaine : str) -> str:
+    return base64.b64encode(chaine.encode()).decode()
+    
+def keygenRev(key : str) -> str:
+    return base64.b64decode(key.encode()).decode()
 
 
 class ChatServer:
@@ -37,9 +45,6 @@ class ChatServer:
                 message = client_socket.recv(1024).decode('utf-8')
                 
                 if message:
-                    print(message)
-                    if message == "quit":
-                    	break
                     if message.split("$")[0] == "pseudo":
                     	self.pseudo.append(message.split("$")[1]) if message.split("$")[1] not in self.pseudo else None
                     	print(self.pseudo)

@@ -17,7 +17,9 @@ class MyClient:
             				if message.split("$")[0] == "CCUP":
             					self.to_send = []
             					self.to_send.append(choix de cupidon) # a modifier je sais pas comment récup le choix
-            					
+            					"""
+            						Pour Victor : dans linstruction précédente, je dois pouvoir récupérer les choix fais pas l'utilisateurs.
+            					"""
                 			print(f"\n{message}")
         		except:
             			print("[ERREUR] Connexion au serveur perdue.")
