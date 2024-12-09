@@ -10,27 +10,27 @@ class Joueur:
         role (str) : Rôle du joueur (par défaut, None).
 
     Méthodes :
-        __str__() : Retourne une représentation textuelle du joueur.
-        mourir() : Marque le joueur comme mort et met à jour l'interface.
+        mourir() : Marque le joueur comme mort.
     """
     
-    def __init__(self, nom):
+    def __init__(self):
     
         """
         Initialise un joueur.
-
-        Input:
-            nom (str) : Nom du joueur.
         """
         
-        self.nom = nom
+        self.nom = ""
         self.est_vivant = True
         self.role = None
 
-    def mourir(self, cycle):
+    def mourir(self):
         self.est_vivant = False
-        cycle.chat("Maitre du jeu",f"{self.nom} ({self.role}) est mort.")
-        cycle.afficher_joueurs()
+
+    def agir(self, joueurs, interface):
+        cibles = joueurs[:]
+        cibles.remove(self.nom)
+        cible = interface.action(cibles)
+        return cible
 
 
 # Classes spécifiques pour chaque rôle
@@ -38,42 +38,24 @@ class LoupGarou(Joueur):
 
     """
     Classe représentant un Loup-Garou.
-
-    Méthodes :
-        attaquer(joueur) : Attaque un joueur donné.
     """
     
     def __init__(self, nom):
         super().__init__(nom)
         self.role = "Loup-Garou"
 
-    def attaquer(self, joueur, cycle):
-        if joueur:
-            if joueur.est_vivant:
-                joueur.mourir(cycle)
-                cycle.chat("Maitre du jeu",f"{self.nom} (Loup-Garou) attaque {joueur.nom}.")
-        else:
-            cycle.chat("Maitre du jeu",f"{self.nom} (Loup-Garou) n'attaque pas.")
                 
             
 class Voyante(Joueur):
 
     """
     Classe représentant une Voyante.
-
-    Méthodes :
-        sonder(joueur) : Découvre le rôle d'un joueur donné.
     """
     
     def __init__(self, nom):
         super().__init__(nom)
         self.role = "Voyante"
 
-    def sonder(self, joueur, cycle):
-        if joueur:
-            cycle.chat("Maitre du jeu",f"{self.nom} (Voyante) sonde {joueur.nom}: {joueur.role}")
-        else:
-            cycle.chat("Maitre du jeu",f"{self.nom} (Voyante) ne sonde pas")
             
             
 class Villageois(Joueur):
@@ -123,87 +105,76 @@ class Chasseur(Joueur):
 
     """
     Classe représentant un Chasseur.
-
-    Méthodes :
-        tirer(cible) : Tire sur un joueur après sa mort.
-        mourir() : Redéfinition pour déclencher l'action de tir.
     """
     
     def __init__(self, nom):
         super().__init__(nom)
         self.role = "Chasseur"
 
-    def tirer(self, cible,cycle):
-        if cible:
-            if self.est_vivant is False:  # Tirer après la mort
-                cycle.chat("Maitre du jeu",f"{self.nom} (Chasseur) tire sur {cible.nom}.")
-                cible.mourir(cycle)
-        else:
-            cycle.chat("Maitre du jeu","Le chasseur n'a pas tiré")
-    
-    def mourir(self, cycle):
-        super().mourir(cycle)
-        self.tirer(cycle.trouver_joueur(cycle.interface.action(cycle.playerAlive(),"Chasseur")), cycle)
-
 class Cupidon(Joueur):
 
     """
     Classe représentant Cupidon.
 
-    Attributs :
-        amoureux (list) : Liste des deux joueurs liés comme amoureux.
-
     Méthodes :
-        lier_amoureux(joueur1, joueur2) : Lie deux joueurs comme amoureux.
+        agir(self, joueurs, interface) : Permet au cupidon de choisir les deux amoureux parmis la liste des joueurs.
     """
     
     def __init__(self, nom):
         super().__init__(nom)
         self.role = "Cupidon"
-        self.amoureux = []  # Liste pour les amoureux
 
-    def lier_amoureux(self, joueur1, joueur2, cycle):
-
-        if joueur1 and joueur2:
-            self.amoureux = [joueur1, joueur2]
-            cycle.chat("Maitre du jeu",f"{self.nom} (Cupidon) lie {joueur1.nom} et {joueur2.nom} en tant qu'amoureux.")
-            # Ajoute une référence pour savoir s'ils sont amoureux
-            joueur1.amoureux = joueur2
-            joueur2.amoureux = joueur1
-        else:
-            cycle.chat("Maitre du jeu","Aucun couple n'a été formé")
+    def agir(self, joueurs, interface):
+        cibles = joueurs[:]
+        amoureux1 = interface.action(cibles)
+        cibles.remove(amoureux1)
+        amoureux2 = interface.action(cibles)
+        if amoureux1 and amoureux2:
+            return amoureux1,amoureux2
+        return None
 
 class Voleur(Joueur):
 
     """
     Classe représentant un Voleur.
-
-    Attributs :
-        peut_voler (bool) : Indique si le voleur peut encore voler un rôle.
-
-    Méthodes :
-        voler_role(joueur) : Vole le rôle d'un joueur donné.
     """
     
     def __init__(self, nom):
         super().__init__(nom)
         self.role = "Voleur"
-        self.peut_voler = True  # Voleur peut voler une seule fois, durant la première nuit
+        
+   
 
-    def voler_role(self, joueur, cycle):
-        if not self.peut_voler:
-            cycle.chat("Maitre du jeu",f"{self.nom} ne peut plus voler de rôle.")
-            return
-        if joueur == None:
-            cycle.chat("Maitre du jeu","Aucun rôle n'a été volé.")
-            return
+def createPlayer(role, name):
+    """
+        Renvoie un objet de la classe Joueur en fonction d'un role et du pseudo.
 
-        # Sélectionner aléatoirement un joueur dont le rôle va être volé
-        cycle.chat("Maitre du jeu",f"{self.nom} vole le rôle de {joueur.nom} qui était {joueur.role}.")
+        Input:
+            role (str): Nom du role.
+            name (str): Nom du joueur.
 
-        # Échange des rôles
-        ancien_role = joueur.role
-        joueur.role = "Voleur"  # La victime devient un Voleur sans la capacité de voler
-        self.role = ancien_role  # Le voleur prend le rôle de la victime
-        cycle.interface.changeImage(self.role)
-        self.peut_voler = False  # Désactiver la capacité de voler
+        Output:
+            Joueur : Object créé en fonction des paramètres, ou None si le rôle n'existe pas.
+    """
+
+    player = None
+    match role:
+        case "Voleur":
+            player = Voleur()
+        case "Cupidon":
+            player = Cupidon()
+        case "Sorcière":
+            player = Sorciere()
+        case "Chasseur":
+            player = Chasseur()
+        case "Voyante":
+            player = Voyante()
+        case "Loup-Garou":
+            player = LoupGarou()
+        case "Simple-Villageois":
+            player = Villageois()
+    
+    if player:
+        player.nom = name
+        return player
+    return None

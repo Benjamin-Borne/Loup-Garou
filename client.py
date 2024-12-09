@@ -20,7 +20,12 @@ class MyClient:
             					"""
             						Pour Victor : dans linstruction précédente, je dois pouvoir récupérer les choix fais pas l'utilisateurs.
             					"""
-                			print(f"\n{message}")
+            				elif message.split("$")[0] == "CVOL":
+            					self.to_send = Interface.action #a modifier avec Victor
+            					#changer image
+            					
+            				else:
+            				   	print(f"{message[message.index('$')+1:]}")
         		except:
             			print("[ERREUR] Connexion au serveur perdue.")
             			client_socket.close()
@@ -52,4 +57,5 @@ class MyClient:
             			break
             		elif self.to_send != None:
         			client.send(str(self.to_send).encode('utf-8'))
+        			self.to_send = None
 

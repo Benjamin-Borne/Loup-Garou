@@ -49,8 +49,7 @@ class Cycle:
 	self.role = Composition.createComp(len(self.players))
 	for i in range(len(self.role)):
 	    self.role[i].nom = self.pseudo[i]
-	    
-		
+	    		
 
         self.nuit_numero = 0
 
@@ -59,7 +58,7 @@ class Cycle:
         self.amoureux = []
         self.votes = []
     	   
-    def trouver_joueur(self,nom):
+    def trouver_joueur(self, nom : str) -> Joueur:
         for joueur in self.role:
             if joueur.nom == nom:
                 return joueur
@@ -97,24 +96,28 @@ class Cycle:
         self.serveur.broadcast(message, "") #Envoie du message à tous les joueurs.
         
         #Cupidon choisis
-        cupidon_socket = self.players[self.pseudo.indexof(cupidon.nom)]
-        serveur.send("CCUP$Sélectionne deux amoureux.".encode('utf-8'), cupidon_socket)
-        response = cupidon.recv(1024).decode('utf-8') #réponse de la forme "['pseudo1', 'pseudo2']" (type str)
+        cupidon_socket = self.players[self.pseudo.index(cupidon.nom)]
+        self.serveur.send("CCUP$Sélectionne deux amoureux.".encode('utf-8'), cupidon_socket)
+        response = cupidon_socket.recv(1024).decode('utf-8') #réponse de la forme "['pseudo1', 'pseudo2']" (type str)
         joueur1, joueur2 = ast.litteral_eval(response)[0], ast.litteral_eval(response)[1] #retransformation en liste puis récupération des pseudos
         
 
         if joueur1 and joueur2 and joueur1 != joueur2:
             self.amoureux = [self.trouver_joueur(joueur1), self.trouver_joueur(joueur2)]
             #Message aux amoureux
-            serveur.send(f"Tu es amoureux avec {self.amoureux[1].nom}".encode('utf-8'), self.players[self.pseudo.indexof(self.amoureux[0].nom)
-            serveur.send(f"Tu es amoureux avec {self.amoureux[0].nom}".encode('utf-8'), self.players[self.pseudo.indexof(self.amoureux[1].nom)
-            serveur.send("Le couple est formé".encode('utf-8'),cupidon_socket)
+            self.serveur.send(f"Tu es amoureux avec {self.amoureux[1].nom}".encode('utf-8'), self.players[self.pseudo.index(self.amoureux[0].nom)
+            self.serveur.send(f"Tu es amoureux avec {self.amoureux[0].nom}".encode('utf-8'), self.players[self.pseudo.index(self.amoureux[1].nom)
+            self.serveur.send("Le couple est formé".encode('utf-8'),cupidon_socket)
         else:
-            serveur.send("Aucun couple n'a été formé",cupidon_socket)
+            self.serveur.broadcast("Aucun couple n'a été formé",cupidon_socket)
         
         
     def phase_voleur(self):
-        Reseau.serveur.broadcast("message", serveur_socket)
+    	"""
+    		Méthode permmettant de voler une carte
+    	"""
+    	
+    	self.serveur.broadcast(message, "")
         for player in self.role:
             if isinstance(player, Role.Voleur) and player.peut_voler:
                 voleur = player
@@ -124,16 +127,17 @@ class Cycle:
                 if player.role != "Voleur":
                     volable.append(player)
 
-            Reseau.serveur.broadcast("message", serveur_socket)
-            Reseau.serveur.send("VoleurChoix",voleur.ip, serveur_socket)
-
-            vole = server.handleClient()
-            if vole:
+            Reseau.serveur.broadcast("message", serveur_socket)# pas compris quoi envoyer
+            
+            voleur_socket = self.players[self.pseudo.index(voleur.nom)]
+            Reseau.serveur.send("CVOL$Quelle personne veux tu voler ?".encode('utf-8'),voleur_socket)
+            
+            response = voleur_socket.recv(1024).decode('utf_8')#pseudo
+            
+            if response:
                 vole = self.trouver_joueur(vole)
-                voleur.voler_role(vole)
-                #Debrouiller pour changer image
-                Reseau.serveur.send("T'as volé (changer image)",voleur.ip, serveur_socket)
-                Reseau.serveur.send("T'as été volé (changer image)",vole.ip, serveur_socket)
+                self.serveur.send("Tu as volé: "+vole.role.encode('utf-8'),voleur_socket) #envoie du message au voleur
+                self.serveur.send("Tu as été volé".encode('utf-8'), self.players[self.pseudo.index(vole)]) #envoie du message au volé
 
     def tour_nuit(self):
         """
