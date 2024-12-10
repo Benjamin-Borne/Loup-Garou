@@ -23,7 +23,22 @@ class MyClient:
             				elif message.split("$")[0] == "CVOL":
             					self.to_send = Interface.action #a modifier avec Victor
             					#changer image
-            					
+            				elif message.split("$")[0] == "VLOU":
+            					self.to_send = Interface.action #a modifier avec Victor
+            				elif message.split("$")[0] == "CVOY":
+            					self.to_send = Interface.action #a modifier avec Victor	
+            				elif message.split("$")[0] == "CVOY":
+            					#a voir si vraiment util
+            					print(f"{message[message.index('$')+1:]}")
+            				elif message.split("$")[0] == "CORSA":
+            					print(message.split("$")[1])
+            					self.to_send = Interface.action
+            				elif message.split("$")[0] == "CSORST":
+            					self.to_send = Interface.action #Selection du gros fils de pute à tuer
+            				elif message.split("$")[0] == "CSORS":
+            					self.to_send = Interface.action #Selection du mec qui se prend pour Jésus
+            				elif message.split("$")[0] == "VOTE":
+            					self.to_send = Interface.action #a modifier avec Victor
             				else:
             				   	print(f"{message[message.index('$')+1:]}")
         		except:

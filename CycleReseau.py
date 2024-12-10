@@ -66,6 +66,25 @@ class Cycle:
     def playerAlive(self):
         return [joueur for joueur in self.role if joueur.est_vivant]
     
+    
+    def count_occurence(self, L : list) -> list:
+    	d = {}
+    	l_ret = []
+    	for el in L:
+    	    if el in d.keys():
+    	    	d[el]+=1
+    	    else:
+    	        d[el] = 1
+    	maxi = 0
+        for key in d.keys():
+            if d[key] > maxi:
+            	l_ret.append(key)
+            	maxi = d[key]
+            elif d[key] == maxi:
+            	l_ret.append(key)
+        return l_ret
+    
+    
     def nuit1(self):
     	
     	self.phase_cupidon()
@@ -127,10 +146,10 @@ class Cycle:
                 if player.role != "Voleur":
                     volable.append(player)
 
-            Reseau.serveur.broadcast("message", serveur_socket)# pas compris quoi envoyer
+            self.serveur.broadcast("message", serveur_socket)# pas compris quoi envoyer
             
             voleur_socket = self.players[self.pseudo.index(voleur.nom)]
-            Reseau.serveur.send("CVOL$Quelle personne veux tu voler ?".encode('utf-8'),voleur_socket)
+            self.serveur.send("CVOL$Quelle personne veux tu voler ?".encode('utf-8'),voleur_socket)
             
             response = voleur_socket.recv(1024).decode('utf_8')#pseudo
             
@@ -149,65 +168,94 @@ class Cycle:
         Met à jour les statuts des joueurs en fonction des actions effectuées.
         """
         self.jour = False
-        Reseau.serveur.broadcast("Nuit X", serveur_socket)
+        self.serveur.broadcast("Nuit numéro {self.nuit}".encode('utf-8'), "")
 
         # Les Loups-Garous choisissent une victime
         loups = [j for j in self.role if isinstance(j, Role.LoupGarou) and j.est_vivant]
+        loups socket = [self.players[self.pseudo.index(j.nom)] for j in loups]
+        
         villageois = [j for j in self.role if not isinstance(j, Role.LoupGarou) and j.est_vivant]
+        villageois_socket = [self.players[self.pseudo.index(j.nom)] for j in villageois]
+        
         victime = None
 
         #A faire ps c comme les votes
-        victime = self.interface.action(villageois, "Loup-Garou")   # choix des loupGarou ************************************
+        while victime == None:
+            for sock in loups_socket:
+                self.serveur.send("VLOU$Choisissez ue victime.".encode('utf-8'), sock)
+            vote = []
+            for sock in loups_socket:
+                vote.append(sock.recv(1024).decode('utf-8'))
+            if len(self.count_occurence(vote)) == 1:
+            	victime = self.count_occurence(vote)[0]
+            else:
+            	self.serveur.send("VLOU$Veuillez vous mettre d'accord bande de gros fils de pute que vous êtes!!!!!!".encode('utf-8'), sock)
+            	
         victime = self.trouver_joueur(victime)
-        for loup in loups:
-            loup.attaquer(victime, self)
+        
+        #La faut m'expliquer comment on tue les gens
 
         # La Voyante sonde un joueur
-        voyantes = [j for j in self.joueurs if isinstance(j, Role.Voyante) and j.est_vivant]
+        for player in self.role:
+            if isinstance(player, Role.Voyante):
+                voyante = player
+                
+        voyante_socket = self.players[self.pseudo.index(voyante.nom)]
+        
         if voyantes:
-            Reseau.serveur.broadcast("Tour de la Vovo", serveur_socket)
-            voyante = voyantes[0]
-            Reseau.serveur.send("Role à voir",voyante.ip, serveur_socket)
-            vu = server.handleClient()
+            self.serveur.broadcast("Au tour de la voyante.".encode('utf-8'), "")
+            self.serveur.send("CVOY$Sélectionne la personne dont tu veux voir la carte".encode('utf-8'), voyante_socket)
+            vu = voyante_socket.recv(1024).decode('utf-8')
             vu = self.trouver_joueur(vu)
-            Reseau.serveur.send("Le role en question ct :" + vu.role ,voyante.ip, serveur_socket)
+            self.serveur.send(f"CVOYREP$Le role en question est : {vu.role}".encode('utf-8') ,voyante_socket)
 
 
         # La Sorcière agit
-        sorcieres = [j for j in self.joueurs if isinstance(j, Role.Sorciere) and j.est_vivant]
+        for player in self.role:
+            if isinstance(player, Role.Sorciere):
+                sorciere = player
+        
+        sorciere_socket = self.players[self.pseudo.index(sorciere.nom)]
+        
         if sorcieres:
-            sorciere = sorcieres[0]
-            if victime:  #choix de la sorcière************************************
-                save = self.interface.action([victime], "Sorcière")
-                if save:
-                    sorciere.sauver(victime, self)
-                
-            
-            cible = self.interface.action([j for j in self.joueurs if j != sorciere], "Sorcière") #choix de la sorcière************************************
-            if cible:
-                cible = self.trouver_joueur(cible)
-                sorciere.tuer(cible, self)  
+	    self.serveur.broadcast("Au tour de la sorciere.".encode('utf-8'), "")
+
+	    
+	    self.serveur.send("CSORA$Que veux tu faire ?".encode('utf-8'), voyante_socket)
+	    
+	    action = sorciere_socket.recv(1024).decode('utf-8')
+	    if action == "tuer":
+	    	self.serveur.send("SORT$Qui veux tu tuer ?".encode('utf-8'), sorciere_socket)
+	    	response = voyante_socket.recv(1024).decode('utf-8')
+	    	#idem loup garou je sais pas comment tuer les gens
+	    elif action == "sauver":
+	    	self.serveur.send("SORS$Qui veux tu tuer ?".encode('utf-8'), sorciere_socket)
+	    	response = voyante_socket.recv(1024).decode('utf-8')
+	    	#faut voir comment rammener les mecs a la vie tah Jésus         
 
         self.nuit_numero += 1
 
     def tour_jour(self):
         self.jour = True
         self.votes = []
-        self.chat("",f"\n--- Jour {self.nuit_numero} ---\n")
+        self.serveur.broadcast(f"\n--- Jour {self.nuit} ---\n".encode('utf-8'), "")
         
-        variable_anti_mess_double=0
-        for amoureux in self.amoureux:
-            if not amoureux.est_vivant and variable_anti_mess_double==0:
-                variable_anti_mess_double=-1
-                self.chat("Maitre du jeu",f"{amoureux.nom} meurt, donc son amoureux {amoureux.amoureux.nom} se suicide.")
-                amoureux.amoureux.mourir(self)
+        for i in range(2):
+            if not amoureux[i].est_vivant:
+                self.serveur.broadcast(f"{amoureux.nom} meurt, donc son amoureux {amoureux[(i+1)%2].nom} se suicide comme une grosse merde parce qu'il est faible ce fils de chien.")
+                #la faut le tuer l'espèce de gros chien de ses morts
         
 
-        self.afficher_joueurs()
+        self.afficher_joueurs() #pas compris ce que c'est censé faire ce truc de merde
 
         self.interface.chronometre(30)
+        
+        self.serveur.broadcast("VOTE$Veuillez voter s'il vous plait bande de chiasse que vous êtes.".encode('utf-8'), "")
+        vote = []
+        #la faut je réfléchisse demain je suis ko technique
+        
         if self.votes:
-            cible = self.votes[0]  #************************************
+            cible = self.votes[0]  
             self.chat("Maitre du jeu",f"Les villageois votent pour éliminer {cible.nom}.")
             cible.mourir(self)
         else:
@@ -223,10 +271,18 @@ class Cycle:
 
         # Phase Cupidon avant la première nuit
 
-        self.interface.updateList(self.joueurs)
+        self.interface.updateList(self.role)
         self.phase_cupidon()
         self.phase_voleur()
-
+        
+        winner = False
+        
+	while not winner:
+	    # Vérifier s'il reste des Loup-Garous vivants
+	    loups_restants = any(isinstance(j, Role.LoupGarou) and j.est_vivant for j in self.role)
+	    # Vérifier s'il reste des Villageois vivants
+            villageois_restants = any(not isinstance(j, Role.LoupGarou) and j.est_vivant for j in self.joueurs)
+            #en vrai la c'est quali première fois qu'il y a un truc bien fait dans cette foutu classe de merde skibidi pouloulou paaaaaa
         for _ in range(tours):
             # Vérifier s'il reste des Loup-Garous vivants
             loups_restants = any(isinstance(j, Role.LoupGarou) and j.est_vivant for j in self.joueurs)
