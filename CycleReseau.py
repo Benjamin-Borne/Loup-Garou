@@ -1,4 +1,3 @@
-import Interface
 import threading
 import random
 import Role
@@ -32,16 +31,19 @@ class Cycle:
         lancer_cycle(tours) : Lance une série de tours jour/nuit.
     """
     
-    def __init__(self):
+    def __init__(self, serv, players_number):
     
         """
         Initialise un cycle de jeu.
 
         Args:
-            joueurs (list) : Liste des joueurs participant à la partie.
+            serveur (ChatServer) : Socket du serveur.
         """ 
-        self.serveur = server.ChatServer()
-        self.players = self.serveure.getClients() #Socket des joueurs (à ne pas toucher)
+        self.serveur = serv
+        while len(self.serveur.getClients()) != players_number:
+      	    time.sleep(0.3)
+      	     
+        self.players = self.serveur.getClients() #Socket des joueurs (à ne pas toucher)
         self.pseudo = self.serveur.getPseudo() #Pseudo des joueurs (à ne pas toucher)
 	
 	
@@ -191,9 +193,9 @@ class Cycle:
             else:
             	self.serveur.send("VLOU$Veuillez vous mettre d'accord bande de gros fils de pute que vous êtes!!!!!!".encode('utf-8'), sock)
             	
-        victime = self.trouver_joueur(victime)
+        victime_loup = self.trouver_joueur(victime)
         
-        #La faut m'expliquer comment on tue les gens
+        
 
         # La Voyante sonde un joueur
         for player in self.role:
@@ -221,17 +223,18 @@ class Cycle:
 	    self.serveur.broadcast("Au tour de la sorciere.".encode('utf-8'), "")
 
 	    
-	    self.serveur.send("CSORA$Que veux tu faire ?".encode('utf-8'), voyante_socket)
+	    self.serveur.send(f"CSORA${victime_loup} est mort que veux tu faire ?".encode('utf-8'), voyante_socket)
 	    
+	    #a modif parce voila quoi
 	    action = sorciere_socket.recv(1024).decode('utf-8')
 	    if action == "tuer":
 	    	self.serveur.send("SORT$Qui veux tu tuer ?".encode('utf-8'), sorciere_socket)
-	    	response = voyante_socket.recv(1024).decode('utf-8')
-	    	#idem loup garou je sais pas comment tuer les gens
+	    	victime = voyante_socket.recv(1024).decode('utf-8')
+	    	victime = self.trouver_joueur(victime)
+	    	victime.mourir()
+	    	
 	    elif action == "sauver":
-	    	self.serveur.send("SORS$Qui veux tu tuer ?".encode('utf-8'), sorciere_socket)
-	    	response = voyante_socket.recv(1024).decode('utf-8')
-	    	#faut voir comment rammener les mecs a la vie tah Jésus         
+	    	victime_loup.est_vivant  = True         
 
         self.nuit_numero += 1
 
@@ -242,15 +245,12 @@ class Cycle:
         
         for i in range(2):
             if not amoureux[i].est_vivant:
-                self.serveur.broadcast(f"{amoureux.nom} meurt, donc son amoureux {amoureux[(i+1)%2].nom} se suicide comme une grosse merde parce qu'il est faible ce fils de chien.")
-                #la faut le tuer l'espèce de gros chien de ses morts
-        
-
-        self.afficher_joueurs() #pas compris ce que c'est censé faire ce truc de merde
+                self.serveur.broadcast(f"{amoureux[i].nom} meurt, donc son amoureux {amoureux[(i+1)%2].nom} se suicide.")
+                amoureux[(i+1)%2].mourir()
 
         self.interface.chronometre(30)
         
-        self.serveur.broadcast("VOTE$Veuillez voter s'il vous plait bande de chiasse que vous êtes.".encode('utf-8'), "")
+        self.serveur.broadcast("VOTE$Veuillez voter s'il vous plait.".encode('utf-8'), "")
         vote = []
         #la faut je réfléchisse demain je suis ko technique
         
@@ -282,24 +282,16 @@ class Cycle:
 	    loups_restants = any(isinstance(j, Role.LoupGarou) and j.est_vivant for j in self.role)
 	    # Vérifier s'il reste des Villageois vivants
             villageois_restants = any(not isinstance(j, Role.LoupGarou) and j.est_vivant for j in self.joueurs)
-            #en vrai la c'est quali première fois qu'il y a un truc bien fait dans cette foutu classe de merde skibidi pouloulou paaaaaa
-        for _ in range(tours):
-            # Vérifier s'il reste des Loup-Garous vivants
-            loups_restants = any(isinstance(j, Role.LoupGarou) and j.est_vivant for j in self.joueurs)
             
-            # Vérifier s'il reste des Villageois vivants
-            villageois_restants = any(not isinstance(j, Role.LoupGarou) and j.est_vivant for j in self.joueurs)
-    
-            if loups_restants and villageois_restants:
-                self.tour_nuit()
-                self.tour_jour()
-                self.afficher_joueurs()
-    
-            elif not villageois_restants:
-                self.chat("Maitre du jeu","Les Loup-Garous ont gagné !")
-    
-            elif not loups_restants:
-                self.chat("Maitre du jeu","Les villageois ont gagné !")
-        self.chat("Maitre du jeu","La Partie est terminé, gg!")
+            if villageois_restants and loups_restants:
+            	self.tour_nuit()
+            	self.tour_jour()
+            else:
+                if not villageois_restants:
+            	    winner = "Villageois"
+            	else:
+            	    winner = "Loup garou"
+            	      
+        self.serveur.broadcast(f"Les winner sont les {winner}".encode('utf-8'), "")
         
         

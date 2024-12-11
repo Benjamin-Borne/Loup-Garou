@@ -1,26 +1,25 @@
 import socket
-import Interface
-import Role
+import sys
+import time
+import threading
 import server
-import cycle_client
+import client
+import Interface
 import CycleReseau
 
-
 def new_game():
-	
 	"""
 		Fonction permettant de créer une partie.
 	"""
 	ip = server.get_ip()
-	key = server.keygen()
+	key = server.keygen(ip)
 	MySock = server.ChatServer(ip, 5000)
 	
 	MySock.start()
 	
 
-	
-def join_game(key: str):
-	
+
+def connect_to_party(key : str, username : str):
 	"""
 		Fonction permettant de rejoindre une partie.
 		inputs:
@@ -32,32 +31,16 @@ def join_game(key: str):
 	
 	new_client.start_client()
 	
-	
-def deroulement_party():
 
-
-
-	"""
-		Fonction du déroulement de la partie. Lancée une fois la partie initialisée.
-	"""
-
-	player = NewPlayer(username)
-	
-
-
-
-
-
-
-	CycleReseau.nuit1()
-	
-	loups_restants = any(isinstance(j, Role.LoupGarou) and j.est_vivant for j in self.joueurs)
-	villageois_restants = any(not isinstance(j, Role.LoupGarou) and j.est_vivant for j in self.joueurs)
-	
-	while not loups_restant or villageois_restants:+
-		nuit()
-		jour()
-		loups_restants = any(isinstance(j, Role.LoupGarou) and j.est_vivant for j in self.joueurs)
-		villageois_restants = any(not isinstance(j, Role.LoupGarou) and j.est_vivant for j in self.joueurs)
-	
-
+if __name__ == "__main__":
+	if sys.argv[1] == "--create":
+		thread1 = threading.Thread(target=new_game)
+		thread2 = threading.Thread(target = connect_to_party, args = (sys.argv[5], server.get_ip(),))
+		thread1.start()
+		thread2.start()
+		
+		MyCycle = CycleReseau()
+	else:
+		thread1 = threading.Thread(target=connect_to_party, args = (sys.argv[5], sys.argv[3],))
+		thread1.start()
+		

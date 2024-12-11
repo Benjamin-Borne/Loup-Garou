@@ -1,6 +1,7 @@
 import socket
 import threading
 import Interface
+import ast
 
 class MyClient:
 
@@ -8,6 +9,7 @@ class MyClient:
 		self.username = username
 		self.ip = ip
 		self.to_send = None
+		self.liste_joueur = []
 		
 	def receive_messages(self, client_socket):
     		while True:
@@ -16,29 +18,24 @@ class MyClient:
             			if message:
             				if message.split("$")[0] == "CCUP":
             					self.to_send = []
-            					self.to_send.append(choix de cupidon) # a modifier je sais pas comment récup le choix
-            					"""
-            						Pour Victor : dans linstruction précédente, je dois pouvoir récupérer les choix fais pas l'utilisateurs.
-            					"""
+            					self.to_send.append(Interface.action(self.liste_joueur))
             				elif message.split("$")[0] == "CVOL":
-            					self.to_send = Interface.action #a modifier avec Victor
+            					self.to_send = Interface.action(self.liste_joueur) 
             					#changer image
             				elif message.split("$")[0] == "VLOU":
-            					self.to_send = Interface.action #a modifier avec Victor
+            					self.to_send = Interface.action([joueur for joueur in self.liste_joueur if not isinstance(joueur, Role.LoupGarou)]) 
             				elif message.split("$")[0] == "CVOY":
-            					self.to_send = Interface.action #a modifier avec Victor	
+            					self.to_send = Interface.action([joueur for joueur in self.liste_joueur if not isinstance(joueur, Role.Voyante)]) 	
             				elif message.split("$")[0] == "CVOY":
             					#a voir si vraiment util
             					print(f"{message[message.index('$')+1:]}")
             				elif message.split("$")[0] == "CORSA":
-            					print(message.split("$")[1])
-            					self.to_send = Interface.action
+            					print(message.split("$")[1]) #la c'est de la merde
+            					self.to_send = Interface.action(self.liste_joueur)
             				elif message.split("$")[0] == "CSORST":
-            					self.to_send = Interface.action #Selection du gros fils de pute à tuer
-            				elif message.split("$")[0] == "CSORS":
-            					self.to_send = Interface.action #Selection du mec qui se prend pour Jésus
+            					self.to_send = Interface.action(['sauver', 'tuer', 'Ne rien Faire'])
             				elif message.split("$")[0] == "VOTE":
-            					self.to_send = Interface.action #a modifier avec Victor
+            					self.to_send = Interface.action([joueur for joueur in self.liste_joueur if not joueur.nom != self.username])
             				else:
             				   	print(f"{message[message.index('$')+1:]}")
         		except:
@@ -70,6 +67,8 @@ class MyClient:
             			client.send(f"{self.username} a quitté le chat.".encode('utf-8'))
             			client.close()
             			break
+            		elif message.split("$")[0] == "LISTE":
+            			self.liste_joueur = ast.literal_eval(message.split("$")[1])
             		elif self.to_send != None:
         			client.send(str(self.to_send).encode('utf-8'))
         			self.to_send = None

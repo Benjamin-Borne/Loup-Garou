@@ -23,7 +23,7 @@ def keygenRev(key : str) -> str:
 
 
 class ChatServer:
-    def __init__(self, host="192.168.1.66", port=5000):
+    def __init__(self, host, port=5000):
         self.host = host
         self.port = port
         self.server = None
