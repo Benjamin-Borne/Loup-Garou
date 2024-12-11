@@ -3,14 +3,10 @@ from tkinter import scrolledtext
 from PIL import ImageTk
 from PIL import Image
 import time
+import threading
+import server
 
-def false():
-    """
-    Fonction utilitaire qui retourne False.
-    Utilisée comme condition par défaut pour certaines méthodes.
-    """
-    return False
-
+PETITE_FILLE_TEMPS = 5
 
 class mainInterface(tk.Tk):
 
@@ -24,7 +20,7 @@ class mainInterface(tk.Tk):
     - Le chronomètre
     """
     
-    def __init__(self, playersList, localPlayer):
+    def __init__(self, playersList, localPlayer, server):
     
         """
         Initialise l'interface principale.
@@ -35,8 +31,18 @@ class mainInterface(tk.Tk):
         """
             
         tk.Tk.__init__(self)
+        self.pf = False
+        self.pfTime = PETITE_FILLE_TEMPS
+        self.canChat = False
+        
         self.local = localPlayer
         self.role = self.local.role
+        self.title("Loup Garou")
+        self.players = playersList
+        self.serv = server
+
+
+        #Initialisation des fenêtres
         self.frameChat = tk.Frame(self, bg="#848484", width=400)
         self.chatHistory = scrolledtext.ScrolledText(self.frameChat, wrap=tk.WORD, state='disabled')
         self.entryFrame = tk.Frame(self.frameChat)
@@ -45,59 +51,88 @@ class mainInterface(tk.Tk):
         self.framePlayer = tk.Frame(self.leftFrame, width=400, height=600, bg="lightblue")
         self.listePlayers = tk.Listbox(self.framePlayer, height=25, width=40, selectmode="single")
         self.chronoGUI = tk.Label(self.leftFrame, text="Liste des joueurs", font=("Arial", 14), bg="lightblue")
-        self.players = [playersList[i].nom for i in range(len(playersList))]
-
-        self.roleActionFrame = tk.Frame(self, bg="#3396c7")
-        self.roleAction = tk.Listbox(self.roleActionFrame, height=25, width=40, selectmode="single")
-        self.roleAction.pack()
-
-        self.frameChat.pack_propagate(False)
-        self.frameChat.pack(side=tk.RIGHT, padx=10, pady=10, fill="y")
-
-        self.roleActionFrame.pack(side="right")
-
-        self.img = Image.open("ressources/loup-garou-dos"+".png")
-        self.img = self.img.resize((200,200))
-        self.img = ImageTk.PhotoImage(self.img,(100,100))
-
-        self.title("Loup Garou")
-        self.iconphoto(True,self.img)
+        self.roleImg = tk.Label(self.frameRole, image=self.img, bg ="#3396c7")
+        self.roleTxt = tk.Label(self.frameRole, text=None, bg="#3396c7",font=("Arial", 28), fg="white")
+        labelPlayer = tk.Label(self.framePlayer, text="Liste des joueurs", font=("Arial", 14), bg="lightblue")
+        self.frameRole = tk.Frame(self.leftFrame, bg="#3396c7")
         self.config(background="#3396c7")
         self.minsize(975,650)
 
-        self.chatHistory.pack(expand="yes", fill="both")
+        #Initialisation des boutons
+        self.sendChat = tk.Button(self.entryFrame, text="Envoyer", width=10, command=self.sendMessage)
+        self.sendVote = tk.Button(self.framePlayer, text="Voter", width=10)
 
+        #GUI pour les rôles
+        self.roleActionFrame = tk.Frame(self, bg="#3396c7")
+        #cas pour la petite-fille
+        self.petiteFilleAction = tk.Button(self.roleActionFrame, height=25, width=40, fg='red', bg='red')
+        self.petiteFilleAction.bind("<Button-1>", self.pfClick)
+        self.petiteFilleAction.bind("<ButtonRelease-1>", self.pfRelease)
+        #cas pour le reste
+        self.roleAction = tk.Listbox(self.roleActionFrame, height=25, width=40, selectmode="single")
+
+
+
+        #GUI pour le chat
+        self.frameChat.pack_propagate(False)
+        self.frameChat.pack(side=tk.RIGHT, padx=10, pady=10, fill="y")
+
+        self.chatHistory.pack(expand="yes", fill="both")
         self.chatHistory.tag_config("Loup-Garou", foreground="red")
         self.chatHistory.tag_config("MDJ", foreground="purple")
 
         self.entryFrame.pack()
         self.entryMessage.pack(side='left')
-
-        self.sendChat = tk.Button(self.entryFrame, text="Envoyer", width=10)
         self.sendChat.pack(side="right")
+        
+       
+        #Création de l'image de rôle
+        self.img = Image.open("ressources/loup-garou-dos"+".png")
+        self.img = self.img.resize((200,200))
+        self.img = ImageTk.PhotoImage(self.img,(100,100))
+        self.iconphoto(True,self.img)
 
+
+        #Pack
+        self.roleActionFrame.pack(side="right")
         self.leftFrame.pack(side=tk.LEFT)
         self.chronoGUI.pack(side ="top")
-        
-        self.framePlayer.pack(side="bottom", padx=20)
-
-        labelPlayer = tk.Label(self.framePlayer, text="Liste des joueurs", font=("Arial", 14), bg="lightblue")
-        labelPlayer.pack(pady=10)
-
-        self.listePlayers.pack(pady=10)
-        
-        self.sendVote = tk.Button(self.framePlayer, text="Voter", width=10)
-        self.sendVote.pack()
-
-        self.frameRole = tk.Frame(self.leftFrame, bg="#3396c7")
-        self.frameRole.pack(side="top", pady=20)
-        
-        self.roleImg = tk.Label(self.frameRole, image=self.img, bg ="#3396c7")
-        self.roleTxt = tk.Label(self.frameRole, text=None, bg="#3396c7",font=("Arial", 28), fg="white")
         self.roleImg.pack(side="bottom")
         self.roleTxt.pack(expand="yes", fill="both", side="top")
-    
+        self.framePlayer.pack(side="bottom", padx=20)
+        labelPlayer.pack(pady=10)
+        self.listePlayers.pack(pady=10)
+        self.sendVote.pack()
+        self.frameRole.pack(side="top", pady=20)
+
+        #Set-up
         self.changeImage(self.role)
+        self.updateList(self.players)
+    
+    def clickThread(self):
+        print("clique")
+        self.pf = True
+        while self.pf:
+            self.pfTime -= 0.1
+            time.sleep(0.1)
+            if self.pfTime <= 0:
+                self.serv.broadcast("Cc la famille".encode("utf-8"),"")
+
+    def pfClick(self, _):
+        threading.Thread(target=self.clickThread).start()
+    def pfRelease(self, _):
+        self.pf = False
+        print("clique plus il reste ", round(self.pfTime,2), "secondes de vision")
+    
+    def pfTurn(self):
+        if self.role == "Petite-Fille":
+            self.pfTime = PETITE_FILLE_TEMPS
+            self.petiteFilleAction.pack()
+    
+    def pfEnd(self):
+        if self.role == "Petite-Fille":
+            self.pf = False
+            self.petiteFilleAction.pack_forget()
 
     def changeImage(self,role):
     
@@ -118,6 +153,13 @@ class mainInterface(tk.Tk):
         self.role = role
     
 
+    def sendMessage(self):
+        if self.canChat:
+            message = self.entryMessage.get()
+            if message != "":
+                self.serv.broadcast(message.encode("utf-8"),"")
+                self.entryMessage.delete(0, tk.END)
+
     def chat(self, joueur, message = ""):
     
         """
@@ -127,22 +169,12 @@ class mainInterface(tk.Tk):
             joueur (str): Nom du joueur qui envoie le message (vide pour les messages globaux).
             message (str): Contenu du message. Si vide, prend le contenu de `entryMessage`.
         """
+        self.chatHistory.config(state='normal')
+        self.chatHistory.insert(tk.END, joueur + " : " + message + "\n")
+        self.chatHistory.config(state='disabled')
         
-        if message == "":
-            message = self.entryMessage.get()
-        if message != "":
-            if joueur != "":
-                self.chatHistory.config(state='normal')
-                self.chatHistory.insert(tk.END, joueur + " : " + message + "\n")
-                self.chatHistory.config(state='disabled')
-                self.entryMessage.delete(0, tk.END)
-            else:
-                self.chatHistory.config(state='normal')
-                self.chatHistory.insert(tk.END, message + "\n")
-                self.chatHistory.config(state='disabled')
-                self.entryMessage.delete(0, tk.END)
 
-    def chronometre(self, temps, condition = false):
+    def chronometre(self, temps, condition = None):
     
         """
         Lance un compte à rebours.
@@ -153,7 +185,7 @@ class mainInterface(tk.Tk):
         """
         
         for i in range(temps,0,-1):
-            if not condition():
+            if condition == None or not condition():
                 self.chronoGUI.configure(text = str(i))
                 time.sleep(1)
             else:
@@ -161,7 +193,7 @@ class mainInterface(tk.Tk):
                 return
 
 
-    def updateList(self, playerAlive):
+    def updateList(self, playersAlive):
     
         """
         Met à jour la liste des joueurs affichés, indiquant ceux qui sont morts.
@@ -169,8 +201,6 @@ class mainInterface(tk.Tk):
         Input:
             playerAlive (list): Liste des joueurs vivants, chaque joueur ayant un attribut `nom`.
         """
-        
-        playersAlive = [playerAlive[i].nom for i in range(len(playerAlive))]
         self.listePlayers.delete(0, self.listePlayers.size())
         for player in self.players:
             if player in playersAlive:
@@ -178,46 +208,40 @@ class mainInterface(tk.Tk):
             else:
                 self.listePlayers.insert(tk.END, player + " (mort)")
     
-    def updateRoleAction(self, affectedPlayers, roleName):
+    def updateRoleAction(self, affectedPlayers):
     
         """
         Met à jour la liste des actions disponibles en fonction des joueurs affectés et du rôle.
 
         Input:
             affectedPlayers (list): Liste des joueurs concernés par l'action.
-            roleName (str): Nom du rôle exécutant l'action.
         """
-            
-        if roleName == self.role:
-            aPlayers = [affectedPlayers[i].nom for i in range(len(affectedPlayers))] + ["Ne rien faire"]
-            self.roleAction.delete(0, self.listePlayers.size())
-            for player in aPlayers:
-                self.roleAction.insert(tk.END, player)
 
-    def action(self, affectedPlayers, roleName): 
+        aPlayers = affectedPlayers + ["Ne rien faire"]
+        self.roleAction.delete(0, self.listePlayers.size())
+        for player in aPlayers:
+            self.roleAction.insert(tk.END, player)
+
+    def action(self, affectedPlayers): 
     
         """
         Réalise une action en fonction du rôle actuel et des joueurs affectés.
 
         Input:
             affectedPlayers (list): Liste des joueurs concernés par l'action.
-            roleName (str): Nom du rôle exécutant l'action.
 
         Output:
             str: Nom du joueur sélectionné pour l'action, ou None si aucune action n'a été prise.
         """
          
-        if self.local.role == roleName:
-            self.updateRoleAction(affectedPlayers, roleName)
-            self.roleAction.pack()
-            self.chronometre(10,self.roleAction.curselection)
-            if self.roleAction.curselection():
-                player = self.roleAction.get(first=self.roleAction.curselection()[0])
-                self.roleAction.pack_forget()
-                if player == "Ne rien faire":
-                    return None
-                return player
+        self.updateRoleAction(affectedPlayers)
+        self.roleAction.pack()
+        self.chronometre(10,self.roleAction.curselection)
+        if self.roleAction.curselection():
+            player = self.roleAction.get(first=self.roleAction.curselection()[0])
+            self.roleAction.pack_forget()
+            if player == "Ne rien faire":
+                return None
+            return player
         self.roleAction.pack_forget()
-        return None       
-
-
+        return None
