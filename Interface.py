@@ -20,7 +20,7 @@ class mainInterface(tk.Tk):
     - Le chronomètre
     """
     
-    def __init__(self, playersList, role, serv):
+    def __init__(self, playersList, role, client):
     
         """
         Initialise l'interface principale.
@@ -29,7 +29,8 @@ class mainInterface(tk.Tk):
             playersList (list): Liste des joueurs.
             localPlayer (object): Joueur local.
         """
-            
+        self.client = client
+        
         tk.Tk.__init__(self)
         self.pf = False
         self.pfTime = PETITE_FILLE_TEMPS
@@ -115,13 +116,13 @@ class mainInterface(tk.Tk):
             self.pfTime -= 0.1
             time.sleep(0.1)
             if self.pfTime <= 0:
-                self.serv.broadcast("Cc la famille".encode("utf-8"),"")
+                self.client.send("Cc la famille".encode("utf-8"),"")
 
     def pfClick(self, _):
         threading.Thread(target=self.clickThread).start()
     def pfRelease(self, _):
         self.pf = False
-        print("clique plus il reste ", round(self.pfTime,2), "secondes de vision")
+        print("clique plus il reste ", round(self.pfTime,2), " secondes de vision")
     
     def pfTurn(self):
         if self.role == "Petite-Fille":
@@ -156,7 +157,7 @@ class mainInterface(tk.Tk):
         if self.canChat:
             message = self.entryMessage.get()
             if message != "":
-                self.serv.broadcast(message.encode("utf-8"),"")
+                self.client.send(message.encode("utf-8"),"")
                 self.entryMessage.delete(0, tk.END)
 
     def chat(self, joueur, message = ""):
