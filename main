@@ -54,7 +54,7 @@ def deroulement_party():
 	loups_restants = any(isinstance(j, Role.LoupGarou) and j.est_vivant for j in self.joueurs)
 	villageois_restants = any(not isinstance(j, Role.LoupGarou) and j.est_vivant for j in self.joueurs)
 	
-	while not loups_restant or villageois_restants:+
+	while not loups_restant or villageois_restants:
 		nuit()
 		jour()
 		loups_restants = any(isinstance(j, Role.LoupGarou) and j.est_vivant for j in self.joueurs)

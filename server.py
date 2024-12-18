@@ -32,10 +32,10 @@ class ChatServer:
 	
 	
     def getClients(self):
-    	return self.clients
-
+        return self.clients
+    
     def getPseudo(self):
-    	return self.pseudo
+        return self.pseudo
 
 
     def handle_client(self, client_socket, address):
@@ -46,8 +46,8 @@ class ChatServer:
                 
                 if message:
                     if message.split("$")[0] == "pseudo":
-                    	self.pseudo.append(message.split("$")[1]) if message.split("$")[1] not in self.pseudo else None
-                    	print(self.pseudo)
+                        self.pseudo.append(message.split("$")[1]) if message.split("$")[1] not in self.pseudo else None
+                        print(self.pseudo)
                     self.broadcast(message, client_socket)
                 else:
                     break
@@ -57,12 +57,12 @@ class ChatServer:
         print(f"[DÉCONNECTÉ] {address} a quitté.")
         self.clients.remove(client_socket)
         client_socket.close()
-    
+
     def send(self, message, destination):
-    	destination.send(message)
-    	    
-    	    
-    	    
+        destination.send(message)
+            
+            
+            
     def broadcast(self, message, sender_socket):
         for client in self.clients:
             if client != sender_socket:
