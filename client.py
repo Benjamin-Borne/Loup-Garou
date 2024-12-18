@@ -10,13 +10,17 @@ class MyClient:
 		self.ip = ip
 		self.to_send = None
 		self.liste_joueur = []
+		self.interface = None
+		self.serv = None
 		
 	def receive_messages(self, client_socket):
 			while True:
 				try:
 						message = client_socket.recv(1024).decode('utf-8')
 						if message:
-							if message.split("$")[0] == "CCUP":
+							if message.split("$")[0] == "PlayListe":
+								self.interface = Interface(ast.literal_eval(message.split("$")[1]), message.split("$")[2], )
+							elif message.split("$")[0] == "CCUP":
 								self.to_send = []
 								self.to_send.append(Interface.action(self.liste_joueur))
 							elif message.split("$")[0] == "CVOL":

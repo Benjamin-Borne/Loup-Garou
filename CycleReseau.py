@@ -51,7 +51,7 @@ class Cycle:
         self.role = Composition.createComp(len(self.players))
         for i in range(len(self.role)):
             self.role[i].nom = self.pseudo[i]
-                    
+            self.serveur.send(f"PlayListe${str(self.pseudo)}${self.role[i].role}".encode('utf-8'), self.players[i])
 
             self.nuit_numero = 0
 

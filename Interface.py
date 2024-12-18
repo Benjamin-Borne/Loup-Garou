@@ -20,7 +20,7 @@ class mainInterface(tk.Tk):
     - Le chronomètre
     """
     
-    def __init__(self, playersList, localPlayer, server):
+    def __init__(self, playersList, role, serv):
     
         """
         Initialise l'interface principale.
@@ -35,8 +35,7 @@ class mainInterface(tk.Tk):
         self.pfTime = PETITE_FILLE_TEMPS
         self.canChat = False
         
-        self.local = localPlayer
-        self.role = self.local.role
+        self.role = self.role
         self.title("Loup Garou")
         self.players = playersList
         self.serv = server
