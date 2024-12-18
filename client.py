@@ -20,6 +20,7 @@ class MyClient:
 						if message:
 							if message.split("$")[0] == "PlayListe":
 								self.interface = Interface(ast.literal_eval(message.split("$")[1]), message.split("$")[2], self)
+								self.interface.mainloop()
 							elif message.split("$")[0] == "CCUP":
 								self.to_send = []
 								self.to_send.append(Interface.action(self.liste_joueur))
@@ -67,13 +68,15 @@ class MyClient:
 
 			# Envoyer des messages
 			while True:
+				"""
 				if message.lower() == "quit":
 						client.send(f"{self.username} a quitté le chat.".encode('utf-8'))
 						client.close()
 						break
 				elif message.split("$")[0] == "LISTE":
 					self.liste_joueur = ast.literal_eval(message.split("$")[1])
-				elif self.to_send != None:
+				"""
+				if self.to_send != None:
 					client.send(str(self.to_send).encode('utf-8'))
 					self.to_send = None
 

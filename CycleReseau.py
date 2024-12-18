@@ -4,6 +4,7 @@ import Role
 import Composition
 import server
 import ast
+import time
 
 
 class Cycle:
@@ -260,7 +261,7 @@ class Cycle:
         else:
             self.chat("Maitre du jeu","Les villageois votent pour n'éliminer personne")
 
-    def lancer_cycle(self, tours):
+    def lancer_cycle(self):
         """
         Lance une série de cycles jour/nuit.
 
@@ -270,7 +271,7 @@ class Cycle:
 
         # Phase Cupidon avant la première nuit
 
-        self.interface.updateList(self.role)
+        
         self.phase_cupidon()
         self.phase_voleur()
         

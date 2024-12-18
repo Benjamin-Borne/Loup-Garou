@@ -36,7 +36,7 @@ class mainInterface(tk.Tk):
         self.pfTime = PETITE_FILLE_TEMPS
         self.canChat = False
         
-        self.role = self.role
+        self.role = role
         self.title("Loup Garou")
         self.players = playersList
         self.serv = server
