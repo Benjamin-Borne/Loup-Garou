@@ -3,10 +3,10 @@ import random
 
 def createComp(nbPlayers):
     match nbPlayers:
-    	case 1:
-    	    return [Role.Villageois()]
-	case 8:
-	    compo = [Role.LoupGarou()]*2 + [Role.Voyante()] + [Role.Villageois()]*3 + [Role.Cupidon()]*1 + [Role.Chasseur()]*1
+        case 1:
+            return [Role.Villageois()]
+        case 8:
+            compo = [Role.LoupGarou()]*2 + [Role.Voyante()] + [Role.Villageois()]*3 + [Role.Cupidon()]*1 + [Role.Chasseur()]*1
             return random.shuffle(compo)
         case 9:
             compo = [Role.LoupGarou()]*2 + [Role.Voyante()] + [Role.Villageois()]*4 + [Role.Cupidon()]*1 + [Role.Chasseur()]*1

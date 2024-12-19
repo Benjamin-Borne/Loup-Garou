@@ -2,10 +2,10 @@ import socket
 import sys
 import time
 import threading
-import server
 import client
 import Interface
 import CycleReseau
+import server
 import base64
 
 def new_game():
@@ -14,10 +14,8 @@ def new_game():
 	"""
 	ip = server.get_ip()
 	key = server.keygen(ip)
-	MySock = server.ChatServer(ip, 5000)
-	
-	return MySock
-	
+	Game = CycleReseau.GameServer(ip, 5000, 1)
+	return Game
 
 
 def connect_to_party(key : str, username : str):
@@ -37,11 +35,8 @@ if __name__ == "__main__":
 	if sys.argv[1] == "--create":
 		serv = new_game()
 		thread1 = threading.Thread(target=serv.start)
-		thread2 = threading.Thread(target = connect_to_party, args = (base64.b64encode(server.get_ip().encode()).decode(), sys.argv[2],))
-		thread1.start()
-		thread2.start()
+		client.MyClient("benji", server.get_ip())
 		
-		MyCycle = CycleReseau.Cycle(serv, 1).lancer_cycle()
 	else:
 		thread1 = threading.Thread(target=connect_to_party, args = (sys.argv[5], sys.argv[3],))
 		thread1.start()
