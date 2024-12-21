@@ -40,8 +40,8 @@ class LoupGarou(Joueur):
     Classe représentant un Loup-Garou.
     """
     
-    def __init__(self, nom):
-        super().__init__(nom)
+    def __init__(self):
+        super().__init__()
         self.role = "Loup-Garou"
 
                 
@@ -52,8 +52,8 @@ class Voyante(Joueur):
     Classe représentant une Voyante.
     """
     
-    def __init__(self, nom):
-        super().__init__(nom)
+    def __init__(self):
+        super().__init__()
         self.role = "Voyante"
 
             
@@ -83,8 +83,8 @@ class Sorciere(Joueur):
         tuer(joueur) : Utilise la potion de mort sur un joueur.
     """
     
-    def __init__(self, nom):
-        super().__init__(nom)
+    def __init__(self):
+        super().__init__()
         self.role = "Sorcière"
         self.potion_vie = True
         self.potion_mort = True
@@ -107,8 +107,8 @@ class Chasseur(Joueur):
     Classe représentant un Chasseur.
     """
     
-    def __init__(self, nom):
-        super().__init__(nom)
+    def __init__(self):
+        super().__init__()
         self.role = "Chasseur"
 
 class Cupidon(Joueur):
@@ -120,8 +120,8 @@ class Cupidon(Joueur):
         agir(self, joueurs, interface) : Permet au cupidon de choisir les deux amoureux parmis la liste des joueurs.
     """
     
-    def __init__(self, nom):
-        super().__init__(nom)
+    def __init__(self):
+        super().__init__()
         self.role = "Cupidon"
 
     def agir(self, joueurs, interface):
@@ -139,8 +139,8 @@ class Voleur(Joueur):
     Classe représentant un Voleur.
     """
     
-    def __init__(self, nom):
-        super().__init__(nom)
+    def __init__(self):
+        super().__init__()
         self.role = "Voleur"
         
    
@@ -154,7 +154,7 @@ def createPlayer(role, name):
             name (str): Nom du joueur.
 
         Output:
-            Joueur : Object créé en fonction des paramètres, ou None si le rôle n'existe pas.
+            (Joueur) : Object créé en fonction des paramètres, ou None si le rôle n'existe pas.
     """
 
     player = None

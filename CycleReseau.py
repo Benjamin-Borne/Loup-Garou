@@ -1,8 +1,6 @@
 import threading
-import random
 import Role
 import Composition
-import server
 import ast
 import time
 import socket
@@ -50,7 +48,7 @@ class GameServer:
         self.pseudos = [] #listes de pseudos
         self.nbPlayers = players_number
         self.role = Composition.createComp(self.nbPlayers)
-        #self.serveur.send(f"PlayListe${str(self.pseudo)}${self.role[i].role}".encode('utf-8'), self.players[i])
+
 
         self.nuit_numero = 0
         self.jour = False
@@ -114,7 +112,7 @@ class GameServer:
         self.broadcast(message, "") #Envoie du message à tous les joueurs.
         
         #Cupidon choisis
-        cupidon_socket = self.players[self.pseudo.index(cupidon.nom)]
+        cupidon_socket = self.clients[self.pseudos.index(cupidon.nom)]
         self.send("CCUP$Sélectionne deux amoureux.".encode('utf-8'), cupidon_socket)
         response = cupidon_socket.recv(1024).decode('utf-8') #réponse de la forme "['pseudo1', 'pseudo2']" (type str)
         joueur1, joueur2 = ast.litteral_eval(response)[0], ast.litteral_eval(response)[1] #retransformation en liste puis récupération des pseudos
@@ -123,8 +121,8 @@ class GameServer:
         if joueur1 and joueur2 and joueur1 != joueur2:
             self.amoureux = [self.trouver_joueur(joueur1), self.trouver_joueur(joueur2)]
             #Message aux amoureux
-            self.send(f"Tu es amoureux avec {self.amoureux[1].nom}".encode('utf-8'), self.players[self.pseudo.index(self.amoureux[0].nom)])
-            self.send(f"Tu es amoureux avec {self.amoureux[0].nom}".encode('utf-8'), self.players[self.pseudo.index(self.amoureux[1].nom)])
+            self.send(f"Tu es amoureux avec {self.amoureux[1].nom}".encode('utf-8'), self.clients[self.pseudos.index(self.amoureux[0].nom)])
+            self.send(f"Tu es amoureux avec {self.amoureux[0].nom}".encode('utf-8'), self.clients[self.pseudos.index(self.amoureux[1].nom)])
             self.send("Le couple est formé".encode('utf-8'), cupidon_socket)
         else:
             self.broadcast("Aucun couple n'a été formé", cupidon_socket)
@@ -137,7 +135,7 @@ class GameServer:
         
         self.broadcast(f"Le voleur se réveil", "")
         for player in self.role:
-            if isinstance(player, Role.Voleur) and player.peut_voler:
+            if isinstance(player, Role.Voleur):
                 voleur = player
         if self.nuit_numero == 1:
             volable = []
@@ -145,7 +143,7 @@ class GameServer:
                 if player.role != "Voleur":
                     volable.append(player)
             
-            voleur_socket = self.players[self.pseudo.index(voleur.nom)]
+            voleur_socket = self.clients[self.pseudos.index(voleur.nom)]
             self.send("CVOL$Quelle personne veux tu voler ?".encode('utf-8'),voleur_socket)
             
             response = voleur_socket.recv(1024).decode('utf_8') #pseudo
@@ -153,7 +151,7 @@ class GameServer:
             if response:
                 vole = self.trouver_joueur(vole)
                 self.send("Tu as volé: "+vole.role.encode('utf-8'),voleur_socket) #envoie du message au voleur
-                self.send("Tu as été volé".encode('utf-8'), self.players[self.pseudo.index(vole)]) #envoie du message au volé
+                self.send("Tu as été volé".encode('utf-8'), self.clients[self.pseudos.index(vole)]) #envoie du message au volé
 
     def tour_nuit(self):
         """
@@ -169,10 +167,10 @@ class GameServer:
 
         # Les Loups-Garous choisissent une victime
         loups = [j for j in self.role if isinstance(j, Role.LoupGarou) and j.est_vivant]
-        loups_socket = [self.players[self.pseudo.index(j.nom)] for j in loups]
+        loups_socket = [self.clients[self.pseudos.index(j.nom)] for j in loups]
         
         villageois = [j for j in self.role if not isinstance(j, Role.LoupGarou) and j.est_vivant]
-        villageois_socket = [self.players[self.pseudo.index(j.nom)] for j in villageois]
+        villageois_socket = [self.clients[self.pseudos.index(j.nom)] for j in villageois]
         
         victime = None
 
@@ -197,7 +195,7 @@ class GameServer:
             if isinstance(player, Role.Voyante):
                 voyante = player
                 
-        voyante_socket = self.players[self.pseudo.index(voyante.nom)]
+        voyante_socket = self.clients[self.pseudos.index(voyante.nom)]
         
         if voyante:
             self.broadcast("Au tour de la voyante.".encode('utf-8'), "")
@@ -212,7 +210,7 @@ class GameServer:
             if isinstance(player, Role.Sorciere):
                 sorciere = player
         
-        sorciere_socket = self.players[self.pseudo.index(sorciere.nom)]
+        sorciere_socket = self.clients[self.pseudos.index(sorciere.nom)]
         
         if sorciere:
             self.broadcast("Au tour de la sorciere.", "")
@@ -300,12 +298,12 @@ class GameServer:
                     if message.split("$")[0] == "pseudo":
                         self.pseudos.append(message.split("$")[1])
                         print(self.pseudos)
-                    self.broadcast(message, client_socket)
+                    #self.broadcast(message, client_socket)
                 else:
                     break
             except:
                 break
-        print("f[DÉCONNECTÉ] {address} a quitté.")
+        print(f"[DÉCONNECTÉ] {address} a quitté.")
         self.clients.remove(client_socket)
         client_socket.close()
         
@@ -313,8 +311,10 @@ class GameServer:
     	destination.send(message)
         
     def broadcast(self, message, sender_socket):
+        print("debug")
         for client in self.clients:
             if client != sender_socket:
+
                 try:
                     client.send(message.encode('utf-8'))
                 except:
@@ -326,13 +326,19 @@ class GameServer:
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server.bind((self.host, self.port))
         self.server.listen(18)
-        print(f"[[DÉMARRÉ] Serveur en attente de connexions sur {self.host}:{self.port}...")
+        print(f"[DÉMARRÉ] Serveur en attente de connexions sur {self.host}:{self.port}...")
         
-        while True:
+        while len(self.clients) != self.nbPlayers:
             client_socket, client_address = self.server.accept()
             self.clients.append(client_socket)
             thread = threading.Thread(target=self.handle_client, args=(client_socket, client_address))
             thread.start() 
-            thread_cycle = threading.Thread(target=self.lancer_cycle)
-            thread_cycle.start()    
+
+        #association de joueur selon le nombre de joueur
+        
+
+        self.broadcast(f"PlayListe${str(self.pseudos)}", "")
+
+        #thread_cycle = threading.Thread(target=self.lancer_cycle)
+        #thread_cycle.start()    
         

@@ -14,7 +14,7 @@ def new_game():
 	"""
 	ip = server.get_ip()
 	key = server.keygen(ip)
-	Game = CycleReseau.GameServer(ip, 1, 5000)
+	Game = CycleReseau.GameServer(ip, 2, 5000)
 	Game.start()
 
 def connect_to_party(key : str, username : str):
@@ -39,6 +39,6 @@ if __name__ == "__main__":
 		client.MyClient("benji", ip).start_client()
 		
 	else:
-		thread1 = threading.Thread(target=connect_to_party, args = (sys.argv[5], sys.argv[3],))
-		thread1.start()
+		ip = server.get_ip()
+		client.MyClient("je_suis_trop_beau", ip).start_client()
 		

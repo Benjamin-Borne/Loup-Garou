@@ -12,6 +12,7 @@ class MyClient:
 		self.to_send = None
 		self.liste_joueur = []
 		self.interface = None
+		self.client = None
 		
 		
 	def receive_messages(self, client_socket):
@@ -19,9 +20,13 @@ class MyClient:
 				try:
 						message = client_socket.recv(1024).decode('utf-8')
 						if message:
+							print(message)
 							if message.split("$")[0] == "PlayListe":
-								self.interface = Interface(ast.literal_eval(message.split("$")[1]), message.split("$")[2], self)
-								self.interface.mainloop()
+								print("ici")
+								#self.interface = Interface(ast.literal_eval(message.split("$")[1]), self.username, self)
+								print("là")
+								#thread_inter = threading.Thread(target = self.interface.mainloop)
+								#thread_inter.start()
 							elif message.split("$")[0] == "CCUP":
 								self.to_send = []
 								self.to_send.append(Interface.action(self.liste_joueur))
@@ -50,21 +55,21 @@ class MyClient:
 						break
 
 	def start_client(self):
-			client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			server_ip = self.ip
 			server_port = 5000
 
 			try:
-				client.connect((server_ip, server_port))
+				self.client.connect((server_ip, server_port))
 				print("[CONNECTÉ] Connexion au serveur réussie.")
 			except:
 				print("[ERREUR] Impossible de se connecter au serveur.")
 				return
 
-			client.send(f"pseudo${self.username}".encode('utf-8'))
+			self.client.send(f"pseudo${self.username}".encode('utf-8'))
 
 			# Thread pour recevoir des messages
-			thread = threading.Thread(target=self.receive_messages, args=(client,))
+			thread = threading.Thread(target=self.receive_messages, args=(self.client,))
 			thread.start()
 
 			# Envoyer des messages
@@ -78,6 +83,6 @@ class MyClient:
 					self.liste_joueur = ast.literal_eval(message.split("$")[1])
 				"""
 				if self.to_send != None:
-					client.send(str(self.to_send).encode('utf-8'))
+					self.client.send(str(self.to_send).encode('utf-8'))
 					self.to_send = None
 
