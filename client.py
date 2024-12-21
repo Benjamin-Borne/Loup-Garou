@@ -2,6 +2,7 @@ import socket
 import threading
 import Interface
 import ast
+import Role
 
 class MyClient:
 

@@ -65,8 +65,8 @@ class Villageois(Joueur):
     (Aucun pouvoir spécifique, rôle de base.)
     """
     
-    def __init__(self, nom):
-        super().__init__(nom)
+    def __init__(self):
+        super().__init__()
         self.role = "Simple-Villageois"
 
 class Sorciere(Joueur):

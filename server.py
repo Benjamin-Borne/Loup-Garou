@@ -85,3 +85,8 @@ class ChatServer:
             thread = threading.Thread(target=self.handle_client, args=(client_socket, client_address))
             thread.start()
 
+
+if __name__=="__main__":
+	ip = get_ip()
+	ChatServer(ip, 5000).start()
+	

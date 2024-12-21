@@ -5,6 +5,7 @@ import Composition
 import server
 import ast
 import time
+import socket
 
 
 class GameServer:
@@ -13,6 +14,8 @@ class GameServer:
     Classe représentant la gestion du cycle jour/nuit.
 
     Attributs :
+    	host(str) : addresse ip du serveur 
+    	port(int) : port de connection du serveur
         joueurs (list) : Liste des joueurs participant à la partie.
         nuit_numero (int) : Compteur de tours de nuit.
         amoureux (list) : Liste des joueurs amoureux.
@@ -37,13 +40,14 @@ class GameServer:
     	#initialisation du serveur
         self.host = host
         self.port = port
-        self.clients = []
+        self.clients = [] #liste des sockets clients
         self.serveur = None    	        
                 
         #self.players = self.serveur.getClients() #Socket des joueurs (à ne pas toucher)
         #self.pseudo = self.serveur.getPseudo() #Pseudo des joueurs (à ne pas toucher)
 
 	#Initialisation du jeu
+        self.pseudos = [] #listes de pseudos
         self.nbPlayers = players_number
         self.role = Composition.createComp(self.nbPlayers)
         #self.serveur.send(f"PlayListe${str(self.pseudo)}${self.role[i].role}".encode('utf-8'), self.players[i])
@@ -52,6 +56,7 @@ class GameServer:
         self.jour = False
         self.amoureux = []
         self.votes = []
+
                 
     def trouver_joueur(self, nom : str) -> Role.Joueur:
         for joueur in self.role:
@@ -292,6 +297,9 @@ class GameServer:
                 message = client_socket.recv(1024).decode('utf-8')
                 
                 if message:
+                    if message.split("$")[0] == "pseudo":
+                        self.pseudos.append(message.split("$")[1])
+                        print(self.pseudos)
                     self.broadcast(message, client_socket)
                 else:
                     break
