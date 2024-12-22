@@ -6,9 +6,10 @@ import Role
 
 class MyClient:
 
-	def __init__(self, username : str, ip : str):
+	def __init__(self, username : str, ip : str, port: int):
 		self.username = username
 		self.ip = ip
+		self.port = port
 		self.to_send = None
 		self.liste_joueur = []
 		self.interface = None
@@ -56,7 +57,7 @@ class MyClient:
 	def start_client(self):
 			self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			server_ip = self.ip
-			server_port = 5000
+			server_port = self.port
 
 			try:
 				self.client.connect((server_ip, server_port))

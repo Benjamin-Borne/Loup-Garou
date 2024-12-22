@@ -1,20 +1,17 @@
-import socket
-import sys
+import argparse
 import time
 import threading
 import client
-import Interface
 import CycleReseau
 import server
-import base64
 
-def new_game():
+def new_game(port=5000):
 	"""
 		Fonction permettant de créer une partie.
 	"""
 	ip = server.get_ip()
 	key = server.keygen(ip)
-	Game = CycleReseau.GameServer(ip, 2, 5000)
+	Game = CycleReseau.GameServer(ip, 2, port)
 	Game.start()
 
 def connect_to_party(key : str, username : str):
@@ -31,14 +28,38 @@ def connect_to_party(key : str, username : str):
 	
 
 if __name__ == "__main__":
-	if sys.argv[1] == "--create":
+
+	parser = argparse.ArgumentParser(description = "Bienvenue sur la page d'aide de notre projet.")
+
+	parser.add_argument("--create", action='store_true', help = "Créer une partie")
+	parser.add_argument("--join", action='store_true', help = "Rejoint une partie.")
+	parser.add_argument("-p", "--port", type=int, help = "Port sur lequel vous souhaitez créer le serveur. (defaut 5000)")
+	parser.add_argument("-k", "--key", type=str, help = "Clé de connection à la partie")
+	parser.add_argument("-u", "--username", type=str, help = "Nom d'utilisateur de la partie.")
+
+	args = parser.parse_args()
+
+	if args.create:
 		ip = server.get_ip()
-		thread1 = threading.Thread(target = new_game)
+		port = 5000
+		if args.port:
+			port = args.port
+			to_keygen = server.keygen(ip+"$"+str(port))
+			thread1 = threading.Thread(target = new_game, args=(args.port,))
+		else:
+			to_keygen = server.keygen(ip+"$5000")
+			thread1 = threading.Thread(target = new_game)
+
+		print(to_keygen)
+
 		thread1.start()
 		time.sleep(0.3)
-		client.MyClient("benji", ip).start_client()
-		
+		client.MyClient(args.username, ip, port).start_client()
+	elif args.join:
+		if args.key:
+			ip_serveur, port_serveur = server.keygenRev(args.key).split("$")[0], int(server.keygenRev(args.key).split("$")[1])
+			client.MyClient(args.username, ip_serveur, port_serveur).start_client()
+		else:
+			parser.print_usage()
 	else:
-		ip = server.get_ip()
-		client.MyClient("je_suis_trop_beau", ip).start_client()
-		
+		parser.print_usage()

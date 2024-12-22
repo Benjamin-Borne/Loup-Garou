@@ -1,6 +1,7 @@
 import socket
 import threading
 import base64
+import ast
 
 def get_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -18,9 +19,9 @@ def get_ip():
 def keygen(chaine : str) -> str:
     return base64.b64encode(chaine.encode()).decode()
     
-def keygenRev(key : str) -> str:
-    return base64.b64decode(key.encode()).decode()
-
+def keygenRev(key : str) -> tuple:
+    ret_key = base64.b64decode(key.encode()).decode()
+    return ast.literal_eval(ret_key)
 
 class ChatServer:
     def __init__(self, host, port=5000):
