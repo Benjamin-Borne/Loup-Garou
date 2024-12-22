@@ -337,7 +337,8 @@ class GameServer:
         #association de joueur selon le nombre de joueur
         
 
-        self.broadcast(f"PlayListe${str(self.pseudos)}", "")
+        for i in range(len(self.pseudos)):
+            self.send(f"PlayListe${str(self.pseudos)}${self.role[i].role}".encode('utf-8'), self.clients[i])
 
         #thread_cycle = threading.Thread(target=self.lancer_cycle)
         #thread_cycle.start()    

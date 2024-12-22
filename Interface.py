@@ -43,18 +43,25 @@ class mainInterface(tk.Tk):
 
 
         #Initialisation des fenêtres
+        
+        #Création de l'image de rôle
+        self.img = Image.open("ressources/loup-garou-dos"+".png")
+        self.img = self.img.resize((200,200))
+        self.img = ImageTk.PhotoImage(self.img,(100,100))
+        self.iconphoto(True,self.img)
+        
         self.frameChat = tk.Frame(self, bg="#848484", width=400)
         self.chatHistory = scrolledtext.ScrolledText(self.frameChat, wrap=tk.WORD, state='disabled')
         self.entryFrame = tk.Frame(self.frameChat)
         self.entryMessage = tk.Entry(self.entryFrame, width=54)
         self.leftFrame = tk.Frame(self, bg="#3396c7")
+        self.frameRole = tk.Frame(self.leftFrame, bg="#3396c7")
         self.framePlayer = tk.Frame(self.leftFrame, width=400, height=600, bg="lightblue")
         self.listePlayers = tk.Listbox(self.framePlayer, height=25, width=40, selectmode="single")
         self.chronoGUI = tk.Label(self.leftFrame, text="Liste des joueurs", font=("Arial", 14), bg="lightblue")
         self.roleImg = tk.Label(self.frameRole, image=self.img, bg ="#3396c7")
         self.roleTxt = tk.Label(self.frameRole, text=None, bg="#3396c7",font=("Arial", 28), fg="white")
         labelPlayer = tk.Label(self.framePlayer, text="Liste des joueurs", font=("Arial", 14), bg="lightblue")
-        self.frameRole = tk.Frame(self.leftFrame, bg="#3396c7")
         self.config(background="#3396c7")
         self.minsize(975,650)
 
@@ -84,13 +91,7 @@ class mainInterface(tk.Tk):
         self.entryFrame.pack()
         self.entryMessage.pack(side='left')
         self.sendChat.pack(side="right")
-        
-       
-        #Création de l'image de rôle
-        self.img = Image.open("ressources/loup-garou-dos"+".png")
-        self.img = self.img.resize((200,200))
-        self.img = ImageTk.PhotoImage(self.img,(100,100))
-        self.iconphoto(True,self.img)
+
 
 
         #Pack

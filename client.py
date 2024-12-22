@@ -23,10 +23,9 @@ class MyClient:
 							print(message)
 							if message.split("$")[0] == "PlayListe":
 								print("ici")
-								#self.interface = Interface(ast.literal_eval(message.split("$")[1]), self.username, self)
-								print("là")
-								#thread_inter = threading.Thread(target = self.interface.mainloop)
-								#thread_inter.start()
+								self.interface = Interface.mainInterface(ast.literal_eval(message.split("$")[1]), message.split("$")[2], self.client)
+								thread_inter = threading.Thread(target = self.interface.mainloop)
+								thread_inter.run()
 							elif message.split("$")[0] == "CCUP":
 								self.to_send = []
 								self.to_send.append(Interface.action(self.liste_joueur))
