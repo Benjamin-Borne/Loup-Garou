@@ -4,7 +4,7 @@ import random
 def createComp(nbPlayers):
     match nbPlayers:
         case 2:
-            return [Role.Villageois(), Role.LoupGarou()]
+            return [Role.LoupGarou(), Role.Cupidon()]
         case 8:
             compo = [Role.LoupGarou()]*2 + [Role.Voyante()] + [Role.Villageois()]*3 + [Role.Cupidon()]*1 + [Role.Chasseur()]*1
             return random.shuffle(compo)

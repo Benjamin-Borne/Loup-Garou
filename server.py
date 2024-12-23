@@ -21,7 +21,7 @@ def keygen(chaine : str) -> str:
     
 def keygenRev(key : str) -> tuple:
     ret_key = base64.b64decode(key.encode()).decode()
-    return ast.literal_eval(ret_key)
+    return ret_key
 
 class ChatServer:
     def __init__(self, host, port=5000):

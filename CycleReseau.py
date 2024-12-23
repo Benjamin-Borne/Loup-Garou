@@ -115,7 +115,7 @@ class GameServer:
         cupidon_socket = self.clients[self.pseudos.index(cupidon.nom)]
         self.send("CCUP$Sélectionne deux amoureux.".encode('utf-8'), cupidon_socket)
         response = cupidon_socket.recv(1024).decode('utf-8') #réponse de la forme "['pseudo1', 'pseudo2']" (type str)
-        joueur1, joueur2 = ast.litteral_eval(response)[0], ast.litteral_eval(response)[1] #retransformation en liste puis récupération des pseudos
+        joueur1, joueur2 = ast.literal_eval(response)[0], ast.literal_eval(response)[1] #retransformation en liste puis récupération des pseudos
         
 
         if joueur1 and joueur2 and joueur1 != joueur2:
@@ -334,12 +334,14 @@ class GameServer:
             thread = threading.Thread(target=self.handle_client, args=(client_socket, client_address))
             thread.start() 
 
+        time.sleep(1)
         #association de joueur selon le nombre de joueur
-        
-
         for i in range(len(self.pseudos)):
             self.send(f"PlayListe${str(self.pseudos)}${self.role[i].role}".encode('utf-8'), self.clients[i])
+            self.role[i].nom = self.pseudos[i]
 
-        #thread_cycle = threading.Thread(target=self.lancer_cycle)
-        #thread_cycle.start()    
+        time.sleep(1)
+
+        thread_cycle = threading.Thread(target=self.lancer_cycle)
+        thread_cycle.start()    
         
