@@ -12,7 +12,7 @@ class MyClient:
 		self.port = port
 		self.to_send = None
 		self.liste_joueur = []
-		self.interface = None
+		self.app = None
 		self.client = None
 		
 		
@@ -24,9 +24,7 @@ class MyClient:
 							print(message)
 							if message.split("$")[0] == "PlayListe":
 								print("ici")
-								self.interface = Interface.mainInterface(ast.literal_eval(message.split("$")[1]), message.split("$")[2], self.client)
-								thread_inter = threading.Thread(target = self.interface.mainloop)
-								thread_inter.run()
+								self.app.after()
 							elif message.split("$")[0] == "CCUP":
 								self.to_send = []
 								self.to_send.append(Interface.action(self.liste_joueur))
@@ -68,21 +66,9 @@ class MyClient:
 
 			self.client.send(f"pseudo${self.username}".encode('utf-8'))
 
+			self.app = Interface.mainInterface([], "", self.client)
 			# Thread pour recevoir des messages
-			thread = threading.Thread(target=self.receive_messages, args=(self.client,))
+			thread = threading.Thread(target=self.receive_messages, args=(self.client,), daemon=True)
 			thread.start()
 
-			# Envoyer des messages
-			while True:
-				"""
-				if message.lower() == "quit":
-						client.send(f"{self.username} a quitté le chat.".encode('utf-8'))
-						client.close()
-						break
-				elif message.split("$")[0] == "LISTE":
-					self.liste_joueur = ast.literal_eval(message.split("$")[1])
-				"""
-				if self.to_send != None:
-					self.client.send(str(self.to_send).encode('utf-8'))
-					self.to_send = None
-
+			self.app.mainloop()
