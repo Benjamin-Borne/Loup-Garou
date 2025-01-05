@@ -109,11 +109,13 @@ class GameServer:
         """
         
         message = "all$Cupidon choisi les amoureux."
+        print("blurp")
         self.broadcast(message, "") #Envoie du message à tous les joueurs.
         
         #Cupidon choisis
         cupidon_socket = self.clients[self.pseudos.index(cupidon.nom)]
-        self.send("CCUP$Sélectionne deux amoureux.".encode('utf-8'), cupidon_socket)
+        print(f"{cupidon.nom}: {cupidon_socket}")
+        self.send_msg("CCUP$Sélectionne deux amoureux.".encode('utf-8'), cupidon_socket)
         response = cupidon_socket.recv(1024).decode('utf-8') #réponse de la forme "['pseudo1', 'pseudo2']" (type str)
         joueur1, joueur2 = ast.literal_eval(response)[0], ast.literal_eval(response)[1] #retransformation en liste puis récupération des pseudos
         
@@ -121,9 +123,9 @@ class GameServer:
         if joueur1 and joueur2 and joueur1 != joueur2:
             self.amoureux = [self.trouver_joueur(joueur1), self.trouver_joueur(joueur2)]
             #Message aux amoureux
-            self.send(f"Tu es amoureux avec {self.amoureux[1].nom}".encode('utf-8'), self.clients[self.pseudos.index(self.amoureux[0].nom)])
-            self.send(f"Tu es amoureux avec {self.amoureux[0].nom}".encode('utf-8'), self.clients[self.pseudos.index(self.amoureux[1].nom)])
-            self.send("Le couple est formé".encode('utf-8'), cupidon_socket)
+            self.send_msg(f"Tu es amoureux avec {self.amoureux[1].nom}".encode('utf-8'), self.clients[self.pseudos.index(self.amoureux[0].nom)])
+            self.send_msg(f"Tu es amoureux avec {self.amoureux[0].nom}".encode('utf-8'), self.clients[self.pseudos.index(self.amoureux[1].nom)])
+            self.send_msg("Le couple est formé".encode('utf-8'), cupidon_socket)
         else:
             self.broadcast("Aucun couple n'a été formé", cupidon_socket)
         
@@ -144,14 +146,14 @@ class GameServer:
                     volable.append(player)
             
             voleur_socket = self.clients[self.pseudos.index(voleur.nom)]
-            self.send("CVOL$Quelle personne veux tu voler ?".encode('utf-8'),voleur_socket)
+            self.send_msg("CVOL$Quelle personne veux tu voler ?".encode('utf-8'),voleur_socket)
             
             response = voleur_socket.recv(1024).decode('utf_8') #pseudo
             
             if response:
                 vole = self.trouver_joueur(vole)
-                self.send("Tu as volé: "+vole.role.encode('utf-8'),voleur_socket) #envoie du message au voleur
-                self.send("Tu as été volé".encode('utf-8'), self.clients[self.pseudos.index(vole)]) #envoie du message au volé
+                self.send_msg("Tu as volé: "+vole.role.encode('utf-8'),voleur_socket) #envoie du message au voleur
+                self.send_msg("Tu as été volé".encode('utf-8'), self.clients[self.pseudos.index(vole)]) #envoie du message au volé
 
     def tour_nuit(self):
         """
@@ -177,14 +179,14 @@ class GameServer:
         #A faire ps c comme les votes
         while victime == None:
             for sock in loups_socket:
-                self.send("VLOU$Choisissez ue victime.".encode('utf-8'), sock)
+                self.send_msg("VLOU$Choisissez ue victime.".encode('utf-8'), sock)
             vote = []
             for sock in loups_socket:
                 vote.append(sock.recv(1024).decode('utf-8'))
             if len(self.count_occurence(vote)) == 1:
                 victime = self.count_occurence(vote)[0]
             else:
-                self.send("VLOU$Veuillez vous mettre d'accord bande de gros fils de pute que vous êtes!!!!!!".encode('utf-8'), sock)
+                self.send_msg("VLOU$Veuillez vous mettre d'accord bande de gros fils de pute que vous êtes!!!!!!".encode('utf-8'), sock)
                 
         victime_loup = self.trouver_joueur(victime)
         
@@ -199,10 +201,10 @@ class GameServer:
         
         if voyante:
             self.broadcast("Au tour de la voyante.".encode('utf-8'), "")
-            self.send("CVOY$Sélectionne la personne dont tu veux voir la carte".encode('utf-8'), voyante_socket)
+            self.send_msg("CVOY$Sélectionne la personne dont tu veux voir la carte".encode('utf-8'), voyante_socket)
             vu = voyante_socket.recv(1024).decode('utf-8')
             vu = self.trouver_joueur(vu)
-            self.send(f"CVOYREP$Le role en question est : {vu.role}".encode('utf-8') ,voyante_socket)
+            self.send_msg(f"CVOYREP$Le role en question est : {vu.role}".encode('utf-8') ,voyante_socket)
 
 
         # La Sorcière agit
@@ -216,12 +218,12 @@ class GameServer:
             self.broadcast("Au tour de la sorciere.", "")
 
         
-        self.send(f"CSORA${victime_loup} est mort que veux tu faire ?".encode('utf-8'), voyante_socket)
+        self.send_msg(f"CSORA${victime_loup} est mort que veux tu faire ?".encode('utf-8'), voyante_socket)
         
         #a modif parce voila quoi
         action = sorciere_socket.recv(1024).decode('utf-8')
         if action == "tuer":
-            self.send("SORT$Qui veux tu tuer ?".encode('utf-8'), sorciere_socket)
+            self.send_msg("SORT$Qui veux tu tuer ?".encode('utf-8'), sorciere_socket)
             victime = voyante_socket.recv(1024).decode('utf-8')
             victime = self.trouver_joueur(victime)
             victime.mourir()
@@ -265,7 +267,7 @@ class GameServer:
         # Phase Cupidon avant la première nuit
 
         
-        self.phase_cupidon()
+        #self.phase_cupidon()
         self.phase_voleur()
         
         winner = False
@@ -298,29 +300,20 @@ class GameServer:
                     if message.split("$")[0] == "pseudo":
                         self.pseudos.append(message.split("$")[1])
                         print(self.pseudos)
-                    #self.broadcast(message, client_socket)
-                else:
-                    break
             except:
                 break
         print(f"[DÉCONNECTÉ] {address} a quitté.")
         self.clients.remove(client_socket)
         client_socket.close()
-        
-    def send(self, message, destination):
-    	destination.send(message)
-        
+    
+    def send_msg(self, message, destination):
+        destination.send(message)
+
     def broadcast(self, message, sender_socket):
         print("debug")
         for client in self.clients:
-            if client != sender_socket:
+            client.send(message.encode()) 
 
-                try:
-                    client.send(message.encode('utf-8'))
-                except:
-                    client.close()
-                    self.clients.remove(client)
-                    
     def start(self):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -331,17 +324,17 @@ class GameServer:
         while len(self.clients) != self.nbPlayers:
             client_socket, client_address = self.server.accept()
             self.clients.append(client_socket)
-            thread = threading.Thread(target=self.handle_client, args=(client_socket, client_address))
-            thread.start() 
+            thread = threading.Thread(target=self.handle_client, args=(client_socket, client_address), daemon=True)
+            thread.start()  
 
         time.sleep(1)
+
         #association de joueur selon le nombre de joueur
         for i in range(len(self.pseudos)):
-            self.send(f"PlayListe${str(self.pseudos)}${self.role[i].role}".encode('utf-8'), self.clients[i])
+            self.send_msg(f"PlayListe${str(self.pseudos)}${self.role[i].role}".encode('utf-8'), self.clients[i])
             self.role[i].nom = self.pseudos[i]
 
         time.sleep(1)
 
-        thread_cycle = threading.Thread(target=self.lancer_cycle)
-        thread_cycle.start()    
+        self.lancer_cycle() 
         

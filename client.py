@@ -2,6 +2,7 @@ import socket
 import threading
 import Interface
 import ast
+import tkinter
 import Role
 
 class MyClient:
@@ -23,13 +24,19 @@ class MyClient:
 						if message:
 							print(message)
 							if message.split("$")[0] == "PlayListe":
-								print("ici")
-								self.app.after()
+								usernames = ast.literal_eval(message.split("$")[1])
+								print(usernames)
+								self.liste_joueur = usernames
+								print("111")
+								self.app.after(0, self.app.startUpdates, *(self.liste_joueur, message.split("$")[2]))
+								print("222")
+								self.app.after(0, self.app.deiconify)
 							elif message.split("$")[0] == "CCUP":
+								print("cup")
 								self.to_send = []
-								self.to_send.append(Interface.action(self.liste_joueur))
+								self.to_send.append(self.app.action(self.liste_joueur))
 							elif message.split("$")[0] == "CVOL":
-								self.to_send = Interface.action(self.liste_joueur) 
+								client_socket.send(self.app.action(self.liste_joueur).encode('utf-8'))
 								#changer image
 							elif message.split("$")[0] == "VLOU":
 								self.to_send = Interface.action([joueur for joueur in self.liste_joueur if not isinstance(joueur, Role.LoupGarou)]) 
@@ -51,7 +58,7 @@ class MyClient:
 						print("[ERREUR] Connexion au serveur perdue.")
 						client_socket.close()
 						break
-
+				
 	def start_client(self):
 			self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			server_ip = self.ip
@@ -65,8 +72,8 @@ class MyClient:
 				return
 
 			self.client.send(f"pseudo${self.username}".encode('utf-8'))
-
-			self.app = Interface.mainInterface([], "", self.client)
+			
+			self.app = Interface.mainInterface([], "simple-villageois", self.client)
 			# Thread pour recevoir des messages
 			thread = threading.Thread(target=self.receive_messages, args=(self.client,), daemon=True)
 			thread.start()

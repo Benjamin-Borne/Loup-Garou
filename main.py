@@ -11,7 +11,7 @@ def new_game(port=5000):
 	"""
 	ip = server.get_ip()
 	key = server.keygen(ip)
-	Game = CycleReseau.GameServer(ip, 2, port)
+	Game = CycleReseau.GameServer(ip, 12, port)
 	Game.start()
 
 def connect_to_party(key : str, username : str):
@@ -45,7 +45,7 @@ if __name__ == "__main__":
 		if args.port:
 			port = args.port
 			to_keygen = server.keygen(ip+"$"+str(port))
-			thread1 = threading.Thread(target = new_game, args=(args.port,))
+			thread1 = threading.Thread(target = new_game, args=(args.port,), daemon=True)
 		else:
 			to_keygen = server.keygen(ip+"$5000")
 			thread1 = threading.Thread(target = new_game)

@@ -39,7 +39,6 @@ class mainInterface(tk.Tk):
         self.role = role
         self.title("Loup Garou")
         self.players = playersList
-        self.serv = server
 
 
         #Initialisation des fenêtres
@@ -109,7 +108,17 @@ class mainInterface(tk.Tk):
         #Set-up
         self.changeImage(self.role)
         self.updateList(self.players)
-    
+
+        self.withdraw()
+
+    def startUpdates(self, usernames: list, role):
+        self.players= usernames
+        self.listePlayers.delete(0, tk.END)
+        self.role = role
+        for user in self.players:
+            self.listePlayers.insert(tk.END, user)
+        self.changeImage(self.role)
+        
     def clickThread(self):
         print("clique")
         self.pf = True
@@ -237,7 +246,7 @@ class mainInterface(tk.Tk):
          
         self.updateRoleAction(affectedPlayers)
         self.roleAction.pack()
-        self.chronometre(10,self.roleAction.curselection)
+        self.chronometre(50,self.roleAction.curselection)
         if self.roleAction.curselection():
             player = self.roleAction.get(first=self.roleAction.curselection()[0])
             self.roleAction.pack_forget()
