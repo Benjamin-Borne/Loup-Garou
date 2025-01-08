@@ -135,25 +135,37 @@ class GameServer:
             Méthode permmettant de voler une carte
         """
         
-        self.broadcast(f"Le voleur se réveil", "")
+        self.broadcast("Le voleur se réveil", "")
         for player in self.role:
             if isinstance(player, Role.Voleur):
                 voleur = player
-        if self.nuit_numero == 1:
+        if self.nuit_numero == 0:
             volable = []
             for player in self.role:
                 if player.role != "Voleur":
                     volable.append(player)
             
             voleur_socket = self.clients[self.pseudos.index(voleur.nom)]
+
+            time.sleep(2)
             self.send_msg("CVOL$Quelle personne veux tu voler ?".encode('utf-8'),voleur_socket)
-            
-            response = voleur_socket.recv(1024).decode('utf_8') #pseudo
-            
+            def receive_message():
+                while True:
+                    print("zhiubfzebfizeo")
+                    response = voleur_socket.recv(1024).decode('utf_8')
+                    if response:
+                        return response
+            response = receive_message() #pseudo
+            print("response: "+response)
             if response:
-                vole = self.trouver_joueur(vole)
-                self.send_msg("Tu as volé: "+vole.role.encode('utf-8'),voleur_socket) #envoie du message au voleur
-                self.send_msg("Tu as été volé".encode('utf-8'), self.clients[self.pseudos.index(vole)]) #envoie du message au volé
+                vole = self.trouver_joueur(response)
+                print("Vole : "+vole.__class__.__name__) 
+                to_send = "CVOLREP$Tu as volé: "+vole.role
+                self.send_msg(to_send.encode('utf-8'),voleur_socket) #envoie du message au voleur
+                self.send_msg("VOLE$Tu as été volé".encode('utf-8'), self.clients[self.pseudos.index(vole.nom)]) #envoie du message au volé
+            else:
+                print("bouba")
+                self.broadcast("Faut choisir.")
 
     def tour_nuit(self):
         """
@@ -165,7 +177,7 @@ class GameServer:
         Met à jour les statuts des joueurs en fonction des actions effectuées.
         """
         self.jour = False
-        self.broadcast("Nuit numéro {self.nuit}".encode('utf-8'), "")
+        self.broadcast(f"Nuit numéro {self.nuit_numero}", "")
 
         # Les Loups-Garous choisissent une victime
         loups = [j for j in self.role if isinstance(j, Role.LoupGarou) and j.est_vivant]
@@ -200,7 +212,7 @@ class GameServer:
         voyante_socket = self.clients[self.pseudos.index(voyante.nom)]
         
         if voyante:
-            self.broadcast("Au tour de la voyante.".encode('utf-8'), "")
+            self.broadcast("Au tour de la voyante.", "")
             self.send_msg("CVOY$Sélectionne la personne dont tu veux voir la carte".encode('utf-8'), voyante_socket)
             vu = voyante_socket.recv(1024).decode('utf-8')
             vu = self.trouver_joueur(vu)
@@ -276,7 +288,7 @@ class GameServer:
             # Vérifier s'il reste des Loup-Garous vivants
             loups_restants = any(isinstance(j, Role.LoupGarou) and j.est_vivant for j in self.role)
             # Vérifier s'il reste des Villageois vivants
-            villageois_restants = any(not isinstance(j, Role.LoupGarou) and j.est_vivant for j in self.joueurs)
+            villageois_restants = any(not isinstance(j, Role.LoupGarou) and j.est_vivant for j in self.role)
             
             if villageois_restants and loups_restants:
                 self.tour_nuit()
@@ -312,7 +324,7 @@ class GameServer:
     def broadcast(self, message, sender_socket):
         print("debug")
         for client in self.clients:
-            client.send(message.encode()) 
+            client.send(message.encode('utf-8')) 
 
     def start(self):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
