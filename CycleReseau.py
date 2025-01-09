@@ -54,6 +54,7 @@ class GameServer:
         self.jour = False
         self.amoureux = []
         self.votes = []
+        self.data_client = {}
 
                 
     def trouver_joueur(self, nom : str) -> Role.Joueur:
@@ -89,7 +90,13 @@ class GameServer:
         self.phase_voleur()
 
 
-
+    def receive_message(self, client_socket):
+        print("serveur prêt")
+        while True:
+            response = client_socket.recv(1024).decode('utf-8')
+            if response:
+                self.send_msg("ACK".encode('utf-8'), client_socket)
+                return response
 
 
     def phase_cupidon(self):
@@ -100,35 +107,23 @@ class GameServer:
         for j in self.role:
             if isinstance(j, Role.Cupidon):
                 cupidon = j
-        
-        
-        #Afficher message
-        """
-        format message:
-                        destination$data@typeAction
-        """
-        
-        message = "all$Cupidon choisi les amoureux."
-        print("blurp")
+        message = "Cupidon choisi les amoureux."
         self.broadcast(message, "") #Envoie du message à tous les joueurs.
         
         #Cupidon choisis
         cupidon_socket = self.clients[self.pseudos.index(cupidon.nom)]
-        print(f"{cupidon.nom}: {cupidon_socket}")
-        self.send_msg("CCUP$Sélectionne deux amoureux.".encode('utf-8'), cupidon_socket)
-        response = cupidon_socket.recv(1024).decode('utf-8') #réponse de la forme "['pseudo1', 'pseudo2']" (type str)
-        joueur1, joueur2 = ast.literal_eval(response)[0], ast.literal_eval(response)[1] #retransformation en liste puis récupération des pseudos
-        
+        time.sleep(2)
 
-        if joueur1 and joueur2 and joueur1 != joueur2:
-            self.amoureux = [self.trouver_joueur(joueur1), self.trouver_joueur(joueur2)]
-            #Message aux amoureux
-            self.send_msg(f"Tu es amoureux avec {self.amoureux[1].nom}".encode('utf-8'), self.clients[self.pseudos.index(self.amoureux[0].nom)])
-            self.send_msg(f"Tu es amoureux avec {self.amoureux[0].nom}".encode('utf-8'), self.clients[self.pseudos.index(self.amoureux[1].nom)])
-            self.send_msg("Le couple est formé".encode('utf-8'), cupidon_socket)
-        else:
-            self.broadcast("Aucun couple n'a été formé", cupidon_socket)
+        self.send_msg("CCUP$Sélectionne deux amoureux.".encode('utf-8'), cupidon_socket)
+        response = ast.literal_eval(self.receive_message(cupidon_socket))
         
+        if response == None:
+            self.broadcast("Aucun couple n'a été formé.", "")
+        else:
+            self.amoureux = response
+            amoureux1_socket, amoureux2_socket = self.clients[self.pseudos.index(self.amoureux[0])], self.clients[self.pseudos.index(self.amoureux[1])]
+            self.send_msg(f"Tu est amoureux avec : {self.amoureux[1]}", amoureux1_socket)
+            self.send_msg(f"Tu est amoureux avec : {self.amoureux[0]}", amoureux2_socket)        
         
     def phase_voleur(self):
         """
@@ -149,20 +144,19 @@ class GameServer:
 
             time.sleep(2)
             self.send_msg("CVOL$Quelle personne veux tu voler ?".encode('utf-8'),voleur_socket)
-            def receive_message():
-                while True:
-                    print("zhiubfzebfizeo")
-                    response = voleur_socket.recv(1024).decode('utf_8')
-                    if response:
-                        return response
-            response = receive_message() #pseudo
+            while self.data_client[voleur_socket] == None:
+                time.sleep(0.1)
+            response = self.data_client[voleur_socket]
             print("response: "+response)
             if response:
-                vole = self.trouver_joueur(response)
-                print("Vole : "+vole.__class__.__name__) 
-                to_send = "CVOLREP$Tu as volé: "+vole.role
-                self.send_msg(to_send.encode('utf-8'),voleur_socket) #envoie du message au voleur
-                self.send_msg("VOLE$Tu as été volé".encode('utf-8'), self.clients[self.pseudos.index(vole.nom)]) #envoie du message au volé
+                if response == 'None':
+                    self.send_msg("Tu n'as volé aucun rôle".encode('utf-8'), voleur_socket)
+                else:
+                    vole = self.trouver_joueur(response)
+                    print("Vole : "+vole.__class__.__name__) 
+                    to_send = "CVOLREP$Tu as volé: "+vole.role
+                    self.send_msg(to_send.encode('utf-8'),voleur_socket) #envoie du message au voleur
+                    self.send_msg("VOLE$Tu as été volé".encode('utf-8'), self.clients[self.pseudos.index(vole.nom)]) #envoie du message au volé
             else:
                 print("bouba")
                 self.broadcast("Faut choisir.")
@@ -311,7 +305,11 @@ class GameServer:
                 if message:
                     if message.split("$")[0] == "pseudo":
                         self.pseudos.append(message.split("$")[1])
+                        self.data_client[client_socket] = None
                         print(self.pseudos)
+                    elif message.split("$")[0] == "VOL":
+                        print("boobs")
+                        self.data_client[client_socket] = message.split("$")[1]
             except:
                 break
         print(f"[DÉCONNECTÉ] {address} a quitté.")

@@ -34,15 +34,23 @@ class MyClient:
 								self.app.after(0, self.app.deiconify)
 								print("333")
 							elif message.split("$")[0] == "CCUP":
-								print("cup")
-								self.to_send = []
-								self.to_send.append(self.app.action(self.liste_joueur))
+								print("ici cupidon")
+								act1 = self.app.action(self.liste_joueur)
+								if act1 == None:
+									client_socket.send("None".encode('utf-8'))
+								else:
+									act2 = self.app.action(self.liste_joueur)
+									client_socket.send(f"[{act1},{act2}]".encode('utf-8'))
 							elif message.split("$")[0] == "CVOL":
-								time.sleep(1)
-								print("ici voleur")
-								to_send = self.app.action(self.liste_joueur)
-								print(to_send)
-								client_socket.send(to_send.encode('utf-8'))
+								time.sleep(2) 
+								print("En attente d'une action à envoyer au serveur...")
+								to_send = "VOL$"+str(self.app.action(self.liste_joueur))
+								print(f"Action choisie : {to_send}")
+								try:
+									client_socket.send(to_send.encode('utf-8'))
+									print("Message envoyé au serveur.")
+								except Exception as e:
+									print(f"Erreur lors de l'envoi : {e}")
 							elif message.split("$")[0]=="CVOLREP":
 								role = message.split('$')[1].split(':')[1][1:].lower()
 								print(role)
