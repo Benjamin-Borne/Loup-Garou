@@ -23,7 +23,7 @@ class MyClient:
 				try:
 						message = client_socket.recv(1024).decode('utf-8')
 						if message:
-							print(message+"\n")
+							print(str(message.split("$"))+"\n")
 							if message.split("$")[0] == "PlayListe":
 								usernames = ast.literal_eval(message.split("$")[1])
 								print(usernames)
@@ -48,26 +48,63 @@ class MyClient:
 								except Exception as e:
 									print(f"Erreur lors de l'envoi : {e}")
 							elif message.split("$")[0]=="CVOLREP":
-								role = message.split('$')[1].split(':')[1][1:].lower()
-								print(role+"\n")
-								self.app.changeImage(role)
+								try:
+									role = message.split('$')[1].split(':')[1][1:].lower()
+									print(role+"\n")
+									self.app.changeImage(role)
+								except Exception as e:
+									print(f"Erreur: {e}")
 							elif message.split("$")[0]=="VOLE":
 								self.app.changeImage("voleur")
 							elif message.split("$")[0] == "VLOU":
-								self.to_send = Interface.action([joueur for joueur in self.liste_joueur if not isinstance(joueur, Role.LoupGarou)]) 
+								self.app.canChat = True
+								def handle_action():
+									to_send = self.app.action(self.liste_joueur)
+									to_send = "LOU$"+str(to_send)
+									try:
+										client_socket.send(to_send.encode('utf-8'))
+									except Exception as e:
+										print(f"Erreur lors de l'envoie : {e}")
+								try:
+									thread = threading.Thread(target = handle_action)
+									thread.start()
+								except Exception as e:
+									print(f"Erreur : {e}")
+							elif message.split("$")[0] == "PF":
+								print("ici petite fille")
+								self.app.pfTurn()
 							elif message.split("$")[0] == "CVOY":
 								print("ici voyante")
-								self.to_send = "VOY$"+self.app.action(self.liste_joueur)
-								client_socket.send(to_send.encode('utf-8'))	
+								to_send = "VOY$"+self.app.action(self.liste_joueur)
+								try:
+									client_socket.send(to_send.encode('utf-8'))	
+								except Exception as e:
+									print(f"Erreur lors de l'envoie : {e}")
 							elif message.split("$")[0] == "CVOYREP":
 								self.app.chat(f"Maitre du jeu: Le Joeur a le Rôle: {message[message.index('$')+1:]}\n")
-							elif message.split("$")[0] == "CORSA":
-								print(message.split("$")[1]) #la c'est de la merde
-								self.to_send = Interface.action(self.liste_joueur)
-							elif message.split("$")[0] == "CSORST":
-								self.to_send = Interface.action(['sauver', 'tuer', 'Ne rien Faire'])
+
+							elif message.split("$")[0] == "SORC":
+								print("ici la sorciere")
+								possible_action = []
+								if 1 in ast.literal_eval(message.split("$")[2]):
+									possible_action.append("Sauver la victime")
+								if 2 in ast.literal_eval(message.split("$")[2]):
+									possible_action.append("Tuer quelqu'un d'autre")
+								to_send = str(self.app.action(possible_action))
+								if to_send == "None" or to_send == "Sauver la victime.":
+									to_send = "SOR$"+to_send
+									client_socket.send(to_send.encode('utf-8'))
+								else:
+									to_send = str(self.app.action(self.liste_joueur))
+									to_send = "SOR$"+str(to_send)
+									client_socket.send(to_send.encode('utf-8'))
 							elif message.split("$")[0] == "VOTE":
-								self.to_send = Interface.action([joueur for joueur in self.liste_joueur if not joueur.nom != self.username])
+								self.app.canChat = True
+								self.app.chronometre(60)
+								self.chat = False
+								to_send = self.app.action(self.liste_joueur)
+								to_send = "VOTE$"+str(to_send)
+								client_socket.send(to_send.encode('utf-8'))
 							else:
 								self.app.chat("Maitre du Jeu\n", message)
 				except:

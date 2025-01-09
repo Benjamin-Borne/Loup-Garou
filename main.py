@@ -11,7 +11,7 @@ def new_game(port=5000):
 	"""
 	ip = server.get_ip()
 	key = server.keygen(ip)
-	Game = CycleReseau.GameServer(ip, 12, port)
+	Game = CycleReseau.GameServer(ip, 11, port)
 	Game.start()
 
 def connect_to_party(key : str, username : str):

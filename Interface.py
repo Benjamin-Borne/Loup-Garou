@@ -52,7 +52,7 @@ class mainInterface(tk.Tk):
         self.frameChat = tk.Frame(self, bg="#848484", width=400)
         self.chatHistory = scrolledtext.ScrolledText(self.frameChat, wrap=tk.WORD, state='disabled')
         self.entryFrame = tk.Frame(self.frameChat)
-        self.entryMessage = tk.Entry(self.entryFrame, width=54)
+        self.entryMessage = tk.Entry(self.entryFrame, width=30)
         self.leftFrame = tk.Frame(self, bg="#3396c7")
         self.frameRole = tk.Frame(self.leftFrame, bg="#3396c7")
         self.framePlayer = tk.Frame(self.leftFrame, width=400, height=600, bg="lightblue")
@@ -120,13 +120,25 @@ class mainInterface(tk.Tk):
         self.changeImage(self.role)
         
     def clickThread(self):
+        def receive_message():
+            while self.pf:
+                message = self.client.recv(1024).decode('utf-8')
+                if message.split("$") =="LOU":
+                    self.chat(message.split("$")[1])
         print("clique")
-        self.pf = True
+        if self.pfTime > 0:
+            self.pf = True
+            thread = threading.Thread(target = receive_message, daemon = True)
+            thread.start()
+        else:
+            self.pf = False
         while self.pf:
             self.pfTime -= 0.1
             time.sleep(0.1)
             if self.pfTime <= 0:
-                self.client.send("Cc la famille".encode("utf-8"),"")
+                self.client.send("PFEND$Petite fille découverte".encode("utf-8"))
+                thread.join()
+                self.pf = False
 
     def pfClick(self, _):
         threading.Thread(target=self.clickThread).start()
@@ -165,9 +177,9 @@ class mainInterface(tk.Tk):
 
     def sendMessage(self):
         if self.canChat:
-            message = self.entryMessage.get()
+            message = "CHAT$"+self.entryMessage.get()
             if message != "":
-                self.client.send(message.encode("utf-8"),"")
+                self.client.send(message.encode("utf-8"))
                 self.entryMessage.delete(0, tk.END)
 
     def chat(self, joueur, message = ""):

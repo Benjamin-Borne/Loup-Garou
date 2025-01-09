@@ -44,7 +44,11 @@ class LoupGarou(Joueur):
         super().__init__()
         self.role = "Loup-Garou"
 
-                
+class PetiteFille(Joueur):
+    
+    def __init__(self):
+        super().__init__()
+        self.role= "Petite-Fille"              
             
 class Voyante(Joueur):
 
