@@ -22,7 +22,13 @@ def createComp(nbPlayers):
             random.shuffle(compo)
             return compo
         case 12:
-            compo = [Role.LoupGarou()]*3 + [Role.Voyante()] + [Role.Villageois()]*4 + [Role.Cupidon()]*1 + [Role.Chasseur()]*1 + [Role.Voleur()]*1  + [Role.Villageois()]*1
+            compo = [Role.LoupGarou() for _ in range(3)] + \
+        [Role.Voyante()] + \
+        [Role.Villageois() for _ in range(4)] + \
+        [Role.Cupidon()] + \
+        [Role.Chasseur()] + \
+        [Role.Voleur()] + \
+        [Role.Villageois()]
             random.shuffle(compo)
             return compo
         case 13:
