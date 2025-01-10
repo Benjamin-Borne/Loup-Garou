@@ -281,7 +281,6 @@ class GameServer:
         victime_loups = self.phase_loups()
         print(f"vloup : {victime_loups}")
         time.sleep(1)
-        print("ici c'est la merde je pense")
         if self.nbPlayers in [11,13,15,16,17,18]:
             witch_action = self.phase_sorciere(victime_loups)       
 
@@ -296,7 +295,7 @@ class GameServer:
         else:
             victimes = (victime_loups)
         print(f"vic : {victimes}")
-        return victimes
+        return (victimes.nom)
 
     def tour_jour(self, victimes):
         print(self.amoureux, victimes)
@@ -337,7 +336,7 @@ class GameServer:
         if self.nuit_numero == 0:
             if self.nbPlayers in [12,13,14,15,16,17,18]:
                 self.phase_voleur()
-            if self.nbPlayers in [9,10,11,12,13,14,15,16,17,18]:
+            if self.nbPlayers in [8, 9,10,11,12,13,14,15,16,17,18]:
                 self.phase_cupidon()
 
         self.nuit_numero+=1

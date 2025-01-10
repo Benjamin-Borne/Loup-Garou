@@ -85,11 +85,13 @@ class MyClient:
 
 							elif message.split("$")[0] == "SORC":
 								print("ici la sorciere")
+
 								possible_action = []
 								if 1 in ast.literal_eval(message.split("$")[2]):
 									possible_action.append("Sauver la victime")
 								if 2 in ast.literal_eval(message.split("$")[2]):
 									possible_action.append("Tuer quelqu'un d'autre")
+								self.app.chat(message.split("$")[1]) #la j'ai rajouté quelque chose
 								to_send = str(self.app.action(possible_action))
 								if to_send == "None" or to_send == "Sauver la victime.":
 									to_send = "SOR$"+to_send

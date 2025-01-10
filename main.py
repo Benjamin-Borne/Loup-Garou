@@ -5,13 +5,13 @@ import client
 import CycleReseau
 import server
 
-def new_game(port=5000):
+def new_game(nbplayer, port=5000):
 	"""
 		Fonction permettant de créer une partie.
 	"""
 	ip = server.get_ip()
 	key = server.keygen(ip)
-	Game = CycleReseau.GameServer(ip, 11, port)
+	Game = CycleReseau.GameServer(ip, nbplayer, port)
 	Game.start()
 
 def connect_to_party(key : str, username : str):
@@ -36,6 +36,7 @@ if __name__ == "__main__":
 	parser.add_argument("-p", "--port", type=int, help = "Port sur lequel vous souhaitez créer le serveur. (defaut 5000)")
 	parser.add_argument("-k", "--key", type=str, help = "Clé de connection à la partie")
 	parser.add_argument("-u", "--username", type=str, help = "Nom d'utilisateur de la partie.")
+	parser.add_argument("-n", "--number", type=int, help="Nombre de joueur")
 
 	args = parser.parse_args()
 
@@ -45,10 +46,10 @@ if __name__ == "__main__":
 		if args.port:
 			port = args.port
 			to_keygen = server.keygen(ip+"$"+str(port))
-			thread1 = threading.Thread(target = new_game, args=(args.port,), daemon=True)
+			thread1 = threading.Thread(target = new_game, args=(args.number, args.port,), daemon=True)
 		else:
 			to_keygen = server.keygen(ip+"$5000")
-			thread1 = threading.Thread(target = new_game)
+			thread1 = threading.Thread(target = new_game, args=(args.number,))
 
 		print(to_keygen)
 
