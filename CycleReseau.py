@@ -325,12 +325,15 @@ class GameServer:
         self.jour = True
         self.votes = []
         self.broadcast(f"\n--- Jour {self.nuit_numero-1} ---\n", "")
-        time.sleep(2)
+        time.sleep(0.3)
         if len(victimes) == 2:
+            victimes_sock = (self.clients[self.pseudos.index(victimes[0])], self.clients[self.pseudos.index(victimes[1])])
             self.broadcast(f"Ces personnes sont mortes cette nuit: {victimes[0], victimes[1]}", "")
         elif len(victimes) == 1:
+            victimes_sock = (self.clients[self.pseudos.index(victimes[0])])
             self.broadcast(f"Cette personne est morte cette nuit: {victimes[0]}", "")
         else:
+            victimes_sock = ()
             self.broadcast("Aucune personne n'est morte cette nuit.", "")
         print(self.amoureux)
 
@@ -338,7 +341,7 @@ class GameServer:
         affected_player = str([player.nom for player in self.role if player.est_vivant])
         time.sleep(0.3)
         self.broadcast(f"VOTE$Vous avez une minute pour choisir qui éliminer${affected_player}", "")
-        while not all([self.data_client[sock] for sock in self.clients]):
+        while not all([self.data_client[sock] for sock in self.clients if sock not in victimes_sock]):
             time.sleep(0.1)
 
         vote = self.count_occurence([self.data_client[sock] for sock in self.data_client.keys()])   

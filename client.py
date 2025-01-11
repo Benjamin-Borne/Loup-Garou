@@ -85,7 +85,7 @@ class MyClient:
 
 							elif message.split("$")[0] == "SORC":
 								print("ici la sorciere")
-
+								
 								possible_action = []
 								if 1 in ast.literal_eval(message.split("$")[2]):
 									possible_action.append("Sauver la victime")
@@ -107,16 +107,19 @@ class MyClient:
 								to_send = "CHA$"+str(self.app.action(affected_player))
 								client_socket.send(to_send.encode('utf-8'))
 							elif message.split("$")[0] == "VOTE":
+								affected_player = ast.literal_eval(message.split("$")[2])
+								affected_player.remove(self.username)
 								self.app.chat(f"Maître du jeu : {message.split('$')[1]}")
 								self.app.canChat = True
+								thread = threading.Thread(target=self.receive_messages, args = (client_socket,))
+								thread.start()
 								self.app.chronometre(60)
 								self.app.canChat = False
-
 								to_send = self.app.action(self.liste_joueur)
 								to_send = "VOTE$"+str(to_send)
 								client_socket.send(to_send.encode('utf-8'))
 							else:
-								self.app.chat("Maitre du Jeu\n", message)
+								self.app.chat("Maitre du Jeu", message)
 				except:
 						print("[ERREUR] Connexion au serveur perdue.")
 						client_socket.close()
