@@ -80,12 +80,6 @@ class GameServer:
         return l_ret
 
 
-    def nuit1(self):
-        
-        self.phase_cupidon()
-        self.phase_voleur()
-
-
     def phase_cupidon(self):
         """
             Fonction permettant d'effectuer la création du couple.
@@ -102,7 +96,10 @@ class GameServer:
         cupidon_socket = self.clients[self.pseudos.index(cupidon.nom)]
         time.sleep(2)
 
-        self.send_msg("CCUP$Sélectionne deux amoureux.".encode('utf-8'), cupidon_socket)
+        affected_player = str([player.nom for player in self.role if player.nom != cupidon.nom and player.est_vivant])
+
+        self.send_msg(f"CCUP$Sélectionne deux amoureux.${affected_player}".encode('utf-8'), cupidon_socket)
+
         while not self.data_client[cupidon_socket]:
             time.sleep(0.1)
         
@@ -111,13 +108,13 @@ class GameServer:
         if response == None:
             self.broadcast("Aucun couple n'a été formé.", "")
         else:
-            self.amoureux = response
-            amoureux1_socket, amoureux2_socket = self.clients[self.pseudos.index(self.amoureux[0])], self.clients[self.pseudos.index(self.amoureux[1])]
-            self.send_msg(f"Tu est amoureux avec : {self.amoureux[1]}".encode('utf-8'), amoureux1_socket)
-            self.send_msg(f"Tu est amoureux avec : {self.amoureux[0]}".encode('utf-8'), amoureux2_socket)  
+            self.amoureux = [self.trouver_joueur(response[0]), self.trouver_joueur(response[1])]
+            amoureux1_socket, amoureux2_socket = self.clients[self.pseudos.index(self.amoureux[0].nom)], self.clients[self.pseudos.index(self.amoureux[1].nom)]
+            self.send_msg(f"Tu est amoureux avec : {self.amoureux[1].nom}".encode('utf-8'), amoureux1_socket)
+            self.send_msg(f"Tu est amoureux avec : {self.amoureux[0].nom}".encode('utf-8'), amoureux2_socket)  
             self.broadcast("Le couple a été formé.", "") 
 
-        self.data_client[cupidon_socket] = None
+        self.data_client[cupidon_socket] = False
 
     def phase_voleur(self):
         """
@@ -136,8 +133,10 @@ class GameServer:
             
             voleur_socket = self.clients[self.pseudos.index(voleur.nom)]
 
+            affected_player = str([player.nom for player in self.role if player.nom != voleur.nom and player.est_vivant])
+
             time.sleep(2)
-            self.send_msg("CVOL$Quelle personne veux tu voler ?".encode('utf-8'),voleur_socket)
+            self.send_msg(f"CVOL$Quelle personne veux tu voler ?${affected_player}".encode('utf-8'),voleur_socket)
             while not self.data_client[voleur_socket]:
                 time.sleep(0.1)
             response = self.data_client[voleur_socket]
@@ -157,22 +156,20 @@ class GameServer:
             else:
                 print("bouba")
                 self.broadcast("Faut choisir.")
-            self.data_client[voleur_socket] = None
+            self.data_client[voleur_socket] = False
 
     def phase_voyante(self):
         # La Voyante sonde un joueur
         for player in self.role:
             if isinstance(player, Role.Voyante):
                 voyante = player
-
-        print(voyante.nom)
                 
         voyante_socket = self.clients[self.pseudos.index(voyante.nom)]
-        
+        affected_player = str([player.nom for player in self.role if player.nom != voyante.nom and player.est_vivant])
         if voyante:
             self.broadcast("Au tour de la voyante.", "")
             time.sleep(0.5)
-            self.send_msg("CVOY$Sélectionne la personne dont tu veux voir la carte".encode('utf-8'), voyante_socket)
+            self.send_msg(f"CVOY$Sélectionne la personne dont tu veux voir la carte${affected_player}".encode('utf-8'), voyante_socket)
 
             while not self.data_client[voyante_socket]:
                 time.sleep(0.1)
@@ -199,11 +196,10 @@ class GameServer:
                 if isinstance(pf, Role.PetiteFille):
                     petite_fille = pf
         victime = None
-
-        #A faire ps c comme les votes
+        affected_player = str([player.nom for player in self.role if player not in loups and player.est_vivant])
         while victime == None:
             for sock in loups_socket:
-                self.send_msg("VLOU$Choisissez ue victime.".encode('utf-8'), sock)
+                self.send_msg(f"VLOU$Choisissez ue victime.${affected_player}".encode('utf-8'), sock)
             if self.nbPlayers in [10,12,14,16,17,18]:
                 self.send_msg("PF$Le tour des loups a commencé".encode('utf-8'), self.clients[self.pseudos.index(petite_fille.nom)])
             while not all([self.data_client[el] for el in self.data_client.keys() if el in loups_socket]):
@@ -217,9 +213,9 @@ class GameServer:
                 victime = self.trouver_joueur(victime)
                 victime.est_vivant = False
                 for sock in loups_socket:
-                    self.data_client[sock] = None
+                    self.data_client[sock] = False
                 if 'petite_fille' in locals():
-                    self.data_client[self.clients[self.pseudos.index(petite_fille.nom)]] = None
+                    self.data_client[self.clients[self.pseudos.index(petite_fille.nom)]] = False
                 print(victime)
                 return victime
             else:
@@ -235,14 +231,14 @@ class GameServer:
                 sorciere = player
         
         sorciere_socket = self.clients[self.pseudos.index(sorciere.nom)]
-
+        affected_player = str([player.nom for player in self.role if player.nom != sorciere.nom and player.est_vivant])
         possible_action = []
         if sorciere.potion_vie:
             possible_action.append(1)
         if sorciere.potion_mort:
             possible_action.append(2)
 
-        self.send_msg(f"SORC${victime.nom} est mort, que veux tu faire ?${str(possible_action)}".encode('utf-8'), sorciere_socket)
+        self.send_msg(f"SORC${victime.nom} est mort, que veux tu faire ?${str(possible_action)}${affected_player}".encode('utf-8'), sorciere_socket)
 
         while not self.data_client[sorciere_socket]:
             time.sleep(0.1)
@@ -251,18 +247,37 @@ class GameServer:
 
         if response == "Sauver la victime.":
             victime.est_vivant = True
-            self.data_client[sorciere_socket] = None
+            self.data_client[sorciere_socket] = False
             return None
         elif response == "None":
-            self.data_client[sorciere_socket] = None
+            self.data_client[sorciere_socket] = False
             return None
         else:
             victime = self.trouver_joueur(response[0])
             victime.est_vivant = False
-            self.data_client[sorciere_socket] = None
+            self.data_client[sorciere_socket] = False
             return victime
 
+    def phase_chasseur(self):
+        self.broadcast("Cette personne est le chasseur.")
+        time.sleep(0.3)
+        for player in self.role:
+            if isinstance(player, Role.Chasseur):
+                chasseur = player
         
+        chasseur_socket = self.clients[self.pseudos.index(chasseur.nom)]
+        affected_player = str([player.nom for player in self.role if player.nom != chasseur.nom and player.est_vivant])
+        self.send_msg(f"CHASS$Qui veux tu entrainer dans ta mort ?${affected_player}".encode('utf-8'), chasseur_socket)
+
+        while not self.data_client[chasseur_socket]:
+            time.sleep(0.1)
+
+        if self.data_client[chasseur_socket] != "None":
+            self.trouver_joueur(self.data_client[chasseur_socket]).est_vivant = False
+            self.data_client[chasseur_socket] = False
+            return self.data_client[chasseur_socket]
+        self.data_client[chasseur_socket] = False
+        return None
 
     def tour_nuit(self):
         """
@@ -294,10 +309,18 @@ class GameServer:
             self.nuit_numero += 1
         else:
             victimes = (victime_loups)
+        self.nuit_numero+=1
         print(f"vic : {victimes}")
         return (victimes.nom)
 
     def tour_jour(self, victimes):
+        def find_lover():
+            if self.amoureux != None:
+                for i in range(2):
+                    if not self.amoureux[i].est_vivant:
+                        self.broadcast(f"{self.amoureux[i].nom} meurt, donc son amoureux {self.amoureux[(i+1)%2].nom} se suicide.", "")
+                        self.amoureux[(i+1)%2].mourir()
+
         print(self.amoureux, victimes)
         self.jour = True
         self.votes = []
@@ -310,20 +333,36 @@ class GameServer:
         else:
             self.broadcast("Aucune personne n'est morte cette nuit.", "")
         print(self.amoureux)
-        for i in range(2):
-            if not self.amoureux[i].est_vivant:
-                self.broadcast(f"{self.amoureux[i].nom} meurt, donc son amoureux {self.amoureux[(i+1)%2].nom} se suicide.", "")
-                self.amoureux[(i+1)%2].mourir()
 
-        self.broadcast("VOTE$Vous avez une minute pour choisir qui éliminer", "")
+        find_lover()
+        affected_player = str([player.nom for player in self.role if player.est_vivant])
+        time.sleep(0.3)
+        self.broadcast(f"VOTE$Vous avez une minute pour choisir qui éliminer${affected_player}", "")
         while not all([self.data_client[sock] for sock in self.clients]):
             time.sleep(0.1)
 
-        vote = self.count_occurence([self.data_client[sock] for sock in self.clients])   
+        vote = self.count_occurence([self.data_client[sock] for sock in self.data_client.keys()])   
 
-        vote = self.trouver_joueur(vote)
+        vote = self.trouver_joueur(vote[0])
+        vote.est_vivant = False
 
         self.broadcast(f"{vote.nom} a été éliminé. {vote.nom} était {vote.role}", "")
+
+        find_lover()
+
+        for sock in self.data_client.keys():
+            self.data_client[sock] = False
+
+        if vote.role == "Chasseur":
+            victime = self.phase_chasseur()
+            if victime == None:
+                self.broadcast("Le chasseur a décidé de mourir seul", "")
+            else:
+                self.broadcast(f"Le chasseur entraine {victime} dans sa mort.", "")
+
+        
+
+        
 
     def lancer_cycle(self):
         """
@@ -402,6 +441,10 @@ class GameServer:
                         self.data_client[client_socket] = message.split("$")[1]
                     elif message.split("$")[0] == "VOTE":
                         print("boobs7")
+                        print(message.split("$")[1])
+                        self.data_client[client_socket] = message.split("$")[1]
+                    elif message.split("$")[0] == "CHA":
+                        print("boobs8")
                         self.data_client[client_socket] = message.split("$")[1]
             except:
                 break

@@ -31,18 +31,18 @@ class MyClient:
 								self.app.after(0, self.app.startUpdates, *(self.liste_joueur, message.split("$")[2]))
 								self.app.after(0, self.app.deiconify)
 							elif message.split("$")[0] == "CCUP":
-								print("ici cupidon")
-								act1 = self.app.action(self.liste_joueur)
+								affected_player = ast.literal_eval(message.split("$")[2])
+								act1 = self.app.action(affected_player)
 								if act1 != None:
-									act2 = self.app.action(self.liste_joueur)
+									affected_player.remove(act1)
+									act2 = self.app.action(affected_player)
 									to_send = [act1, act2]
 								to_send = "CUP$"+str(to_send)
 								client_socket.send(to_send.encode('utf-8'))
 							elif message.split("$")[0] == "CVOL":
 								time.sleep(2) 
-								print("En attente d'une action à envoyer au serveur...")
-								to_send = "VOL$"+str(self.app.action(self.liste_joueur))
-								print(f"Action choisie : {to_send}")
+								affected_player = ast.literal_eval(message.split("$")[2])
+								to_send = "VOL$"+str(self.app.action(affected_player))
 								try:
 									client_socket.send(to_send.encode('utf-8'))
 								except Exception as e:
@@ -58,8 +58,9 @@ class MyClient:
 								self.app.changeImage("voleur")
 							elif message.split("$")[0] == "VLOU":
 								self.app.canChat = True
+								affected_player = ast.literal_eval(message.split("$")[2])
 								def handle_action():
-									to_send = self.app.action(self.liste_joueur)
+									to_send = self.app.action(affected_player)
 									to_send = "LOU$"+str(to_send)
 									try:
 										client_socket.send(to_send.encode('utf-8'))
@@ -71,11 +72,10 @@ class MyClient:
 								except Exception as e:
 									print(f"Erreur : {e}")
 							elif message.split("$")[0] == "PF":
-								print("ici petite fille")
 								self.app.pfTurn()
 							elif message.split("$")[0] == "CVOY":
-								print("ici voyante")
-								to_send = "VOY$"+self.app.action(self.liste_joueur)
+								affected_player = ast.literal_eval(message.split("$")[2])
+								to_send = "VOY$"+self.app.action(affected_player)
 								try:
 									client_socket.send(to_send.encode('utf-8'))	
 								except Exception as e:
@@ -97,13 +97,21 @@ class MyClient:
 									to_send = "SOR$"+to_send
 									client_socket.send(to_send.encode('utf-8'))
 								else:
-									to_send = str(self.app.action(self.liste_joueur))
+									affected_player = ast.literal_eval(message.split("$")[3])
+									to_send = str(self.app.action(affected_player))
 									to_send = "SOR$"+str(to_send)
 									client_socket.send(to_send.encode('utf-8'))
+							elif message.split("$")[0] == "CHASS":
+								affected_player = ast.literal_eval(message.split("$")[2])
+								self.app.chat(f"Maitre du jeur : {message.split('$')[1]}")
+								to_send = "CHA$"+str(self.app.action(affected_player))
+								client_socket.send(to_send.encode('utf-8'))
 							elif message.split("$")[0] == "VOTE":
+								self.app.chat(f"Maître du jeu : {message.split('$')[1]}")
 								self.app.canChat = True
 								self.app.chronometre(60)
-								self.chat = False
+								self.app.canChat = False
+
 								to_send = self.app.action(self.liste_joueur)
 								to_send = "VOTE$"+str(to_send)
 								client_socket.send(to_send.encode('utf-8'))
