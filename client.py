@@ -37,6 +37,7 @@ class MyClient:
 									affected_player.remove(act1)
 									act2 = self.app.action(affected_player)
 									to_send = [act1, act2]
+									print(to_send)
 								to_send = "CUP$"+str(to_send)
 								client_socket.send(to_send.encode('utf-8'))
 							elif message.split("$")[0] == "CVOL":
@@ -58,9 +59,12 @@ class MyClient:
 								self.app.changeImage("voleur")
 							elif message.split("$")[0] == "VLOU":
 								self.app.canChat = True
+								self.app.loup = True
 								affected_player = ast.literal_eval(message.split("$")[2])
 								def handle_action():
 									to_send = self.app.action(affected_player)
+									self.app.loup = False
+									self.app.canChat = False
 									to_send = "LOU$"+str(to_send)
 									try:
 										client_socket.send(to_send.encode('utf-8'))
@@ -107,19 +111,26 @@ class MyClient:
 								to_send = "CHA$"+str(self.app.action(affected_player))
 								client_socket.send(to_send.encode('utf-8'))
 							elif message.split("$")[0] == "VOTE":
-								affected_player = ast.literal_eval(message.split("$")[2])
-								affected_player.remove(self.username)
-								self.app.chat(f"Maître du jeu : {message.split('$')[1]}")
-								self.app.canChat = True
-								thread = threading.Thread(target=self.receive_messages, args = (client_socket,))
-								thread.start()
-								self.app.chronometre(60)
-								self.app.canChat = False
-								to_send = self.app.action(self.liste_joueur)
-								to_send = "VOTE$"+str(to_send)
-								client_socket.send(to_send.encode('utf-8'))
+									affected_player = ast.literal_eval(message.split("$")[2])
+									affected_player.remove(self.username)
+									self.app.chat(f"Maître du jeu : {message.split('$')[1]}")
+									self.app.canChat = True
+									thread = threading.Thread(target=self.receive_messages, args = (client_socket,))
+									thread.start()
+									self.app.chronometre(20)
+									self.app.canChat = False
+									to_send = self.app.action(self.liste_joueur)
+									to_send = "VOTE$"+str(to_send)
+									client_socket.send(to_send.encode('utf-8'))
+							elif message.split("$")[0] == "LISTE":
+								player_alive = ast.literal_eval(message.split("$")[1])
+								self.app.after(0, self.app.updateList, player_alive)
 							else:
-								self.app.chat("Maitre du Jeu", message)
+								to_chat = message.split("$")[1]
+								try:
+									self.app.chat(message.split("$")[2], to_chat)
+								except Exception as e:
+									print(f"Error : {e}")
 				except:
 						print("[ERREUR] Connexion au serveur perdue.")
 						client_socket.close()

@@ -35,6 +35,7 @@ class mainInterface(tk.Tk):
         self.pf = False
         self.pfTime = PETITE_FILLE_TEMPS
         self.canChat = False
+        self.loup = False
         
         self.role = role
         self.title("Loup Garou")
@@ -177,7 +178,10 @@ class mainInterface(tk.Tk):
 
     def sendMessage(self):
         if self.canChat:
-            message = "CHAT$"+self.entryMessage.get()
+            if self.loup == True:
+                message = "LOUM$"+self.entryMessage.get()
+            else:
+                message = "CHAT$" + self.entryMessage.get()
             if message != "":
                 self.client.send(message.encode("utf-8"))
                 self.entryMessage.delete(0, tk.END)
