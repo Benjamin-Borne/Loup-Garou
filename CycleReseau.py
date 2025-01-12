@@ -523,10 +523,10 @@ class GameServer:
                         for sock in loups_sock:
                             sock.send(to_send.encode("utf-8"))
                         if 'pf_sock' in locals():
-                            to_send = "PFLOU$"+message.split("$")[1]+"$"+message.split("$")[2]
+                            to_send = "PFLOU$"+message.split("$")[1]+"$"+self.pseudos[self.clients.index(client_socket)]
                             pf_sock.send(to_send.encode('utf-8'))
                     elif message.split("$")[0] == "PFEND":
-                        to_send = f"{self.pseudos[self.clients.index(client_socket)]} est la petite fille."
+                        to_send = f"CHAT${self.pseudos[self.clients.index(client_socket)]} est la petite fille.$Maitre du jeu"
                         self.broadcast(to_send, "")
                     elif message.split("$")[0] == "SOR":
                         self.data_client[client_socket] = message.split("$")[1]
