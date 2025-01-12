@@ -2,7 +2,9 @@ from collections import Counter
 import threading
 import Role
 import Composition
+import save
 import ast
+import csv
 import time
 import socket
 
@@ -37,7 +39,7 @@ class GameServer:
         lancer_cycle(tours) : Lance une série de tours jour/nuit.
     """
 
-    def __init__(self, host, players_number, port = 5000):
+    def __init__(self, host, players_number, port, fromASave = False):
     	
     	#initialisation du serveur
         self.host = host
@@ -58,6 +60,28 @@ class GameServer:
         self.amoureux = []
         self.votes = []
         self.data_client = {}
+        self.save = fromASave
+
+        if fromASave:
+            self.clients = [None]* players_number
+            with open("save.csv", newline='') as fichier:
+                lecture = csv.reader(fichier, delimiter=',')
+                for data in lecture:
+                    if data and data != ["Nom", "Role", "Est_Vivant", "Est_Maire", "nuit", "Est_En_Couple"]:
+                        self.nuit_numero = int(data[4])
+                        i = 0
+                        assigned = False
+                        while not assigned and i < players_number:
+                            if data[1] == self.role[i].role and self.role[i].nom == "":
+                                assigned = True
+                                self.role[i].nom = data[0]
+                                self.role[i].est_vivant = data[2]
+                                if data[3]:
+                                    self.maire = data[0]
+                                if data[5]:
+                                    self.amoureux.append(self.role[i])
+                            i += 1
+            fichier.close()
 
                 
     def trouver_joueur(self, nom : str) -> Role.Joueur:
@@ -441,6 +465,7 @@ class GameServer:
             if self.nbPlayers in [8, 9,10,11,12,13,14,15,16,17,18]:
                 self.phase_cupidon()
                 time.sleep(0.2)
+        save.save(self.role, self.amoureux, self.maire, 0)
 
         self.nuit_numero+=1
 
@@ -482,7 +507,8 @@ class GameServer:
                     
                         
         self.broadcast(f"CHAT$Les winner sont les {winner}$Maitre du jeu", "")
-        
+        save.deleteSave("save.csv")
+
     def handle_client(self, client_socket, address):
         print(f"[NOUVEAU CLIENT] {address} connecté.")
         while True:

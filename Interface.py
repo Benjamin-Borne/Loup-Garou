@@ -36,12 +36,12 @@ class mainInterface(tk.Tk):
         self.pfTime = PETITE_FILLE_TEMPS
         self.canChat = False
         self.loupChat = False
-        self.receiving_thread = None
+        self.start_receiving = False
         
         self.role = role
         self.title("Loup Garou")
         self.players = playersList
-        self.lock = threading.Lock()
+
 
         #Initialisation des fenêtres
         
@@ -128,56 +128,67 @@ class mainInterface(tk.Tk):
             self.listePlayers.insert(tk.END, user)
         self.changeImage(self.role)
 
+    
+
     def receive_message(self):
-        """
-            Fonction permettant l'écoute des messages durant le clique de la petite fille.
-        """
         while self.pf:
             try:
                 message = self.client.recv(1024).decode('utf-8')
-                if message and self.pf:
+                if message and self.start_receiving:
                     if message.split("$")[0] == "PFLOU":
-                        self.chat(message.split('$')[2], message.split('$')[1])
+                        self.chat(message.split("$")[2], message.split("$")[1])
             except Exception as e:
                 print(f"Error : {e}")
-                  
+
     def clickThread(self):
         with self.lock:
             if self.pfTime > 0:
                 self.pf = True
-                if not self.receiving_thread or not self.receiving_thread.is_alive():
-                    self.receiving_thread = threading.Thread(target=self.receive_message, daemon=True)
-                    self.receiving_thread.start()
+                self.start_receiving =True
+                receive_thread = threading.Thread(target = self.receive_message)
+                receive_thread.start()
             else:
                 self.pf = False
-
         while self.pf:
             with self.lock:
                 self.pfTime -=0.1
                 if self.pfTime <= 0:
                     self.client.send("PFEND$Petite fille découverte".encode('utf-8'))
                     self.pf = False
-                    self.pfEnd()
             time.sleep(0.1)
-
+        self.start_receiving = False
+        """
+        if self.pfTime > 0:
+            self.pf = True
+            thread = threading.Thread(target = self.receive_message, daemon = True)
+            thread.start()
+        else:
+            self.pf = False
+        while self.pf:
+            self.pfTime -= 0.1
+            time.sleep(0.1)
+            if self.pfTime <= 0:
+                self.client.send("PFEND$Petite fille découverte".encode("utf-8"))
+                self.pf = False
+        """
     def pfClick(self, _):
         threading.Thread(target=self.clickThread, daemon=True).start()
 
     def pfRelease(self, _):
-        self.pf = False
+        with self.lock:
+            self.pf = False
         self.chat("Maitre du jeu", f"Clique relâché, il reste {round(self.pfTime, 2)} secondes.")
-    
+
     def pfTurn(self):
          if self.role == "Petite-Fille":
             self.pfTime = PETITE_FILLE_TEMPS
             self.petiteFilleAction.pack()
-    
+
     def pfEnd(self):
          if self.role == "Petite-Fille":
             with self.lock:
                 self.pf = False
             self.petiteFilleAction.pack_forget()
-
     def changeImage(self,role):
     
         """
