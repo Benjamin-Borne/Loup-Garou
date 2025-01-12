@@ -1,0 +1,9 @@
+Nom,Role,Est_Vivant,Est_Maire,Est_En_Couple
+V,Voyante,True,True,False
+i,Simple-Villageois,True,False,True
+c,Chasseur,True,False,False
+t,Cupidon,False,False,False
+o,Loup-Garou,True,False,False
+r,Simple-Villageois,True,False,False
+P,Loup-Garou,True,False,True
+e,Simple-Villageois,True,False,False

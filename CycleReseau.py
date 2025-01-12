@@ -4,6 +4,7 @@ import Composition
 import ast
 import time
 import socket
+import save
 
 
 class GameServer:
@@ -367,6 +368,8 @@ class GameServer:
         
         time.sleep(0.3)
 
+        save.save(self.role, self.amoureux, self.maire)
+
         self.broadcast(f"VOTE$Vous avez une minute pour choisir qui éliminer${affected_player}", "")
         while not all([self.data_client[sock] for sock in self.clients if sock not in victimes_sock]):
             time.sleep(0.1)
@@ -410,6 +413,7 @@ class GameServer:
         """
 
         if self.nuit_numero == 0:
+            save.save(self.role, [], None)
             self.broadcast(f"VOTE$Vous devez élire un maire.${self.pseudos}", "")
             time.sleep(0.2)
             self.maire = self.phase_maire()
@@ -420,6 +424,7 @@ class GameServer:
             if self.nbPlayers in [8, 9,10,11,12,13,14,15,16,17,18]:
                 self.phase_cupidon()
                 time.sleep(0.2)
+            save.save(self.role, self.amoureux, self.maire)
 
         self.nuit_numero+=1
 
@@ -447,6 +452,7 @@ class GameServer:
                     
                         
         self.broadcast(f"CHAT$Les winner sont les {winner}$Maitre du jeu", "")
+        save.deleteSave("save.csv")
         
     def handle_client(self, client_socket, address):
         print(f"[NOUVEAU CLIENT] {address} connecté.")
