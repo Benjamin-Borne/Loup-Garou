@@ -323,15 +323,15 @@ class GameServer:
             witch_action = self.phase_sorciere(victime_loups)       
 
             if witch_action == None:
-                victimes = (victime_loups.nom)
+                victimes = [victime_loups.nom]
             elif witch_action == "sauver":
                 self.nuit_numero+=1
                 return None
             else:
-                victimes = (victime_loups.nom, witch_action.nom)
+                victimes = [victime_loups.nom, witch_action.nom]
             self.nuit_numero += 1
         else:
-            victimes = (victime_loups.nom)
+            victimes = [victime_loups.nom]
 
         self.nuit_numero+=1
         print(f"vic : {victimes}")

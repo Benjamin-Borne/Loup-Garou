@@ -37,6 +37,7 @@ if __name__ == "__main__":
 	parser.add_argument("-k", "--key", type=str, help = "Clé de connection à la partie")
 	parser.add_argument("-u", "--username", type=str, help = "Nom d'utilisateur de la partie.")
 	parser.add_argument("-n", "--number", type=int, help="Nombre de joueur")
+	parser.add_argument('-s', "--save", action='store_true', help = "Permet de rejoindre une partie interrompue.")
 
 	args = parser.parse_args()
 
