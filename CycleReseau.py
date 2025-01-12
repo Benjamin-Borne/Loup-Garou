@@ -5,6 +5,7 @@ import ast
 import time
 import socket
 import save
+import csv
 
 
 class GameServer:
@@ -34,8 +35,8 @@ class GameServer:
         lancer_cycle(tours) : Lance une série de tours jour/nuit.
     """
 
-    def __init__(self, host, players_number, port = 5000):
-    	
+    def __init__(self, host, players_number, port, fromASave = False):
+        
     	#initialisation du serveur
         self.host = host
         self.port = port
@@ -43,6 +44,7 @@ class GameServer:
         self.serveur = None    	        
 
 	    #Initialisation du jeu
+        
         self.pseudos = [] #listes de pseudos
         self.nbPlayers = players_number
         self.role = Composition.createComp(self.nbPlayers)
@@ -54,12 +56,39 @@ class GameServer:
         self.amoureux = []
         self.votes = []
         self.data_client = {}
+        self.save = fromASave
+
+        if fromASave:
+            self.clients = [None]* players_number
+            with open("save.csv", newline='') as fichier:
+                lecture = csv.reader(fichier, delimiter=',')
+                for data in lecture:
+                    if data and data != ["Nom", "Role", "Est_Vivant", "Est_Maire", "nuit", "Est_En_Couple"]:
+                        self.nuit_numero = int(data[4])
+                        i = 0
+                        assigned = False
+                        while not assigned and i < players_number:
+                            if data[1] == self.role[i].role and self.role[i].nom == "":
+                                assigned = True
+                                self.role[i].nom = data[0]
+                                self.role[i].est_vivant = data[2]
+                                if data[3]:
+                                    self.maire = data[0]
+                                if data[5]:
+                                    self.amoureux.append(self.role[i])
+                            i += 1
+            fichier.close()
+                        
+
+            
 
                 
     def trouver_joueur(self, nom : str) -> Role.Joueur:
         for joueur in self.role:
             if joueur.nom == nom:
                 return joueur
+            
+        return False
 
     def playerAlive(self):
         return [joueur for joueur in self.role if joueur.est_vivant]
@@ -426,7 +455,10 @@ class GameServer:
                 time.sleep(0.2)
             save.save(self.role, self.amoureux, self.maire, 0)
 
+        if self.save:
+            self.tour_jour([])
         self.nuit_numero+=1
+            
 
         winner = False
         
@@ -462,8 +494,18 @@ class GameServer:
                 
                 if message:
                     if message.split("$")[0] == "pseudo":
-                        self.pseudos.append(message.split("$")[1])
-                        self.data_client[client_socket] = False
+                        if not self.save:       
+                            self.pseudos.append(message.split("$")[1])
+                            self.data_client[client_socket] = False
+                        elif not self.trouver_joueur(message.split("$")[1]):
+                            print(f"Joueur {message.split("$")[1]} non present lors de la sauvegarde")
+                            self.clients.remove(client_socket)
+                            client_socket.close()
+                        else:
+                            self.pseudos.append(message.split("$")[1])
+                            self.clients[self.role.index(self.trouver_joueur(message.split("$")[1]))] = client_socket
+                            self.clients.pop()
+
                         print(self.pseudos)
                     elif message.split("$")[0] == "CHAT":
                         print("boobs5")
@@ -521,8 +563,9 @@ class GameServer:
             except:
                 break
         print(f"[DÉCONNECTÉ] {address} a quitté.")
-        self.clients.remove(client_socket)
-        client_socket.close()
+        if client_socket in self.clients:
+            self.clients.remove(client_socket)
+            client_socket.close()
     
     def send_msg(self, message, destination):
         destination.send(message)
@@ -539,18 +582,21 @@ class GameServer:
         self.server.listen(18)
         print(f"[DÉMARRÉ] Serveur en attente de connexions sur {self.host}:{self.port}...")
         
-        while len(self.clients) != self.nbPlayers:
+        while len(self.clients) != self.nbPlayers or None in self.clients:
             client_socket, client_address = self.server.accept()
             self.clients.append(client_socket)
             thread = threading.Thread(target=self.handle_client, args=(client_socket, client_address), daemon=True)
-            thread.start()  
+            thread.start()
+            time.sleep(0.1)
 
         time.sleep(1)
 
         #association de joueur selon le nombre de joueur
+
         for i in range(len(self.pseudos)):
             self.send_msg(f"PlayListe${str(self.pseudos)}${self.role[i].role}".encode('utf-8'), self.clients[i])
-            self.role[i].nom = self.pseudos[i]
+            if not self.save:
+                self.role[i].nom = self.pseudos[i]
         time.sleep(1)
 
         self.lancer_cycle() 

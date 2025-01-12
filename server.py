@@ -88,6 +88,6 @@ class ChatServer:
 
 
 if __name__=="__main__":
-	ip = get_ip()
-	ChatServer(ip, 5000).start()
+    ip = get_ip()
+    ChatServer(ip, 5000).start()
 	
