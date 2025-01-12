@@ -58,23 +58,16 @@ class MyClient:
 							elif message.split("$")[0]=="VOLE":
 								self.app.changeImage("voleur")
 							elif message.split("$")[0] == "VLOU":
-								self.app.canChat = True
-								self.app.loup = True
 								affected_player = ast.literal_eval(message.split("$")[2])
-								def handle_action():
-									to_send = self.app.action(affected_player)
-									self.app.loup = False
-									self.app.canChat = False
-									to_send = "LOU$"+str(to_send)
-									try:
-										client_socket.send(to_send.encode('utf-8'))
-									except Exception as e:
-										print(f"Erreur lors de l'envoie : {e}")
-								try:
-									thread = threading.Thread(target = handle_action)
-									thread.start()
-								except Exception as e:
-									print(f"Erreur : {e}")
+								self.app.chat(f"Maître du jeu : {message.split('$')[1]}")
+								self.app.canChat = True
+								thread = threading.Thread(target=self.receive_messages, args = (client_socket,))
+								thread.start()
+								self.app.chronometre(20)
+								self.app.canChat = False
+								to_send = self.app.action(self.liste_joueur)
+								to_send = "LOU$"+str(to_send)
+								client_socket.send(to_send.encode('utf-8'))
 							elif message.split("$")[0] == "PF":
 								self.app.pfTurn()
 							elif message.split("$")[0] == "CVOY":
@@ -95,9 +88,9 @@ class MyClient:
 									possible_action.append("Sauver la victime")
 								if 2 in ast.literal_eval(message.split("$")[2]):
 									possible_action.append("Tuer quelqu'un d'autre")
-								self.app.chat(message.split("$")[1]) #la j'ai rajouté quelque chose
+								self.app.chat(message.split("$")[1])
 								to_send = str(self.app.action(possible_action))
-								if to_send == "None" or to_send == "Sauver la victime.":
+								if to_send == "None" or to_send == "Sauver la victime":
 									to_send = "SOR$"+to_send
 									client_socket.send(to_send.encode('utf-8'))
 								else:

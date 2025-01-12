@@ -184,6 +184,7 @@ class GameServer:
 
     def phase_loups(self):
         self.broadcast("CHAT$Au tour des loups.$Maitre du jeu", "")
+        time.sleep(0.5)
         # Création de la liste des sockets des loups
         loups = [j for j in self.role if isinstance(j, Role.LoupGarou) and j.est_vivant]
         loups_socket = [self.clients[self.pseudos.index(j.nom)] for j in loups]
@@ -202,6 +203,7 @@ class GameServer:
             for sock in loups_socket:
                 self.send_msg(f"VLOU$Choisissez ue victime.${affected_player}".encode('utf-8'), sock)
             if self.nbPlayers in [10,12,14,16,17,18]:
+                time.sleep(0.5)
                 self.send_msg("PF$Le tour des loups a commencé".encode('utf-8'), self.clients[self.pseudos.index(petite_fille.nom)])
             while not all([self.data_client[el] for el in self.data_client.keys() if el in loups_socket]):
                 time.sleep(0.1)
@@ -250,7 +252,7 @@ class GameServer:
 
         response = self.data_client[sorciere_socket]
 
-        if response == "Sauver la victime.":
+        if response == "Sauver la victime":
             victime.est_vivant = True
             self.data_client[sorciere_socket] = False
             return None
@@ -313,7 +315,7 @@ class GameServer:
         self.broadcast(f"CHAT$\n-------------------\nNuit numéro {self.nuit_numero}\n$", "")
 
         self.phase_voyante()
-        time.sleep(1.5)
+        time.sleep(2)
         victime_loups = self.phase_loups()
         print(f"vloup : {victime_loups}")
         time.sleep(1)
@@ -329,11 +331,11 @@ class GameServer:
                 victimes = (victime_loups.nom, witch_action.nom)
             self.nuit_numero += 1
         else:
-            victimes = (victime_loups)
+            victimes = (victime_loups.nom)
 
         self.nuit_numero+=1
         print(f"vic : {victimes}")
-        return (victimes.nom)
+        return victimes
 
     def tour_jour(self, victimes):
         def find_lover():
@@ -411,6 +413,7 @@ class GameServer:
             self.broadcast(f"VOTE$Vous devez élire un maire.${self.pseudos}", "")
             time.sleep(0.2)
             self.maire = self.phase_maire()
+            time.sleep(0.5)
             self.sock_maire = self.clients[self.pseudos.index(self.maire)]
             if self.nbPlayers in [12,13,14,15,16,17,18]:
                 self.phase_voleur()
@@ -481,10 +484,20 @@ class GameServer:
                         self.data_client[client_socket] = message.split('$')[1]
                     elif message.split("$")[0] == "LOUM":
                         print("boobs9")
-                        loup_sock = [sock for sock in self.clients if sock in loup_sock]
-                        to_send = "CHAT$"+message.split("$")[1]+self.pseudos[self.clients.index(client_socket)]
-                        for sock in loup_sock:
+                        if self.nbPlayers in [10,12,14,16,17,18]:
+                            for pf in self.role:
+                                if isinstance(pf, Role.PetiteFille):
+                                    petite_fille = pf
+                            pf_sock = self.clients[self.pseudos.index(petite_fille.nom)]
+                        loups = [j for j in self.role if isinstance(j, Role.LoupGarou) and j.est_vivant]
+                        loups_sock = [self.clients[self.pseudos.index(j.nom)] for j in loups]
+                        to_send = "CHAT$"+message.split("$")[1]+"$"+self.pseudos[self.clients.index(client_socket)]
+                        print(to_send)
+                        for sock in loups_sock:
                             sock.send(to_send.encode("utf-8"))
+                        if 'pf_sock' in locals():
+                            to_send = "PFLOU$"+message.split("$")[1]+"$"+message.split("$")[2]
+                            pf_sock.send(to_send.encode('utf-8'))
                     elif message.split("$")[0] == "PFEND":
                         print("boobs5")
                         to_send = f"{self.pseudos[self.clients.index(client_socket)]} est la petite fille."
