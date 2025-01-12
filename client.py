@@ -19,14 +19,15 @@ class MyClient:
 		
 		
 	def receive_messages(self, client_socket):
+			"""
+				Fonction d'écoutedu serveur.
+			"""
 			while True:
 				try:
 						message = client_socket.recv(1024).decode('utf-8')
 						if message:
-							print(str(message.split("$"))+"\n")
 							if message.split("$")[0] == "PlayListe":
 								usernames = ast.literal_eval(message.split("$")[1])
-								print(usernames)
 								self.liste_joueur = usernames
 								self.app.after(0, self.app.startUpdates, *(self.liste_joueur, message.split("$")[2]))
 								self.app.after(0, self.app.deiconify)
@@ -37,7 +38,6 @@ class MyClient:
 									affected_player.remove(act1)
 									act2 = self.app.action(affected_player)
 									to_send = [act1, act2]
-									print(to_send)
 								else:
 									to_send = None
 								to_send = "CUP$"+str(to_send)
@@ -53,7 +53,6 @@ class MyClient:
 							elif message.split("$")[0]=="CVOLREP":
 								try:
 									role = message.split('$')[1].split(':')[1][1:].lower()
-									print(role+"\n")
 									self.app.changeImage(role)
 								except Exception as e:
 									print(f"Erreur: {e}")
@@ -85,11 +84,9 @@ class MyClient:
 								except Exception as e:
 									print(f"Erreur lors de l'envoie : {e}")
 							elif message.split("$")[0] == "CVOYREP":
-								self.app.chat(f"Maitre du jeu: Le Joeur a le Rôle: {message[message.index('$')+1:]}\n")
+								self.app.chat(f"Maitre du jeu", f"{message.split('$')[2]} est: {message.split('$')[1]}")
 
 							elif message.split("$")[0] == "SORC":
-								print("ici la sorciere")
-								
 								possible_action = []
 								if 1 in ast.literal_eval(message.split("$")[2]):
 									possible_action.append("Sauver la victime")
@@ -120,7 +117,6 @@ class MyClient:
 									self.app.canChat = False
 									to_send = self.app.action(affected_player, True)
 									to_send = "VOTE$"+str(to_send)
-									print(to_send)
 									client_socket.send(to_send.encode('utf-8'))
 							elif message.split("$")[0] == "VOTE":
 									affected_player = ast.literal_eval(message.split("$")[2])
@@ -138,6 +134,7 @@ class MyClient:
 								player_alive = ast.literal_eval(message.split("$")[1])
 								self.app.updateList(player_alive)
 							elif message.split("$")[0] == "MAIRE":
+								self.app.chat("Maitre du jeu", message.split("$")[1])
 								affected_player = ast.literal_eval(message.split("$")[2])
 								to_send = self.app.action(affected_player)
 								to_send = "MAIREP$"+to_send
