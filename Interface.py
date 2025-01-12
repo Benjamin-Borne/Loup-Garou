@@ -36,6 +36,7 @@ class mainInterface(tk.Tk):
         self.pfTime = PETITE_FILLE_TEMPS
         self.canChat = False
         self.loupChat = False
+        self.start_receiving = False
         
         self.role = role
         self.title("Loup Garou")
@@ -124,7 +125,7 @@ class mainInterface(tk.Tk):
         while self.pf:
             try:
                 message = self.client.recv(1024).decode('utf-8')
-                if message:
+                if message and self.start_receiving:
                     if message.split("$")[0] == "PFLOU":
                         print(message)
             except Exception as e:
@@ -135,10 +136,12 @@ class mainInterface(tk.Tk):
         with self.lock:
             if self.pfTime > 0:
                 self.pf = True
+                self.start_receiving =True
                 receive_thread = threading.Thread(target = self.receive_message)
                 receive_thread.start()
             else:
                 self.pf = False
+
         while self.pf:
             with self.lock:
                 self.pfTime -=0.1
@@ -146,6 +149,7 @@ class mainInterface(tk.Tk):
                     self.client.send("PFEND$Petite fille découverte".encode('utf-8'))
                     self.pf = False
             time.sleep(0.1)
+        self.start_receiving = False
         """
         if self.pfTime > 0:
             self.pf = True

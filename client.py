@@ -69,7 +69,10 @@ class MyClient:
 								to_send = "LOU$"+str(to_send)
 								client_socket.send(to_send.encode('utf-8'))
 							elif message.split("$")[0] == "PF":
-								self.app.pfTurn()
+								thread = threading.Thread(target = self.app.pfTurn)
+								thread.start()
+								self.app.chronometre(30)
+								self.app.pfEnd()
 							elif message.split("$")[0] == "CVOY":
 								affected_player = ast.literal_eval(message.split("$")[2])
 								to_send = "VOY$"+self.app.action(affected_player)
