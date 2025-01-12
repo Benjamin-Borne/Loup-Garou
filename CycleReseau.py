@@ -368,7 +368,7 @@ class GameServer:
         
         time.sleep(0.3)
 
-        save.save(self.role, self.amoureux, self.maire)
+        save.save(self.role, self.amoureux, self.maire, self.nuit_numero)
 
         self.broadcast(f"VOTE$Vous avez une minute pour choisir qui éliminer${affected_player}", "")
         while not all([self.data_client[sock] for sock in self.clients if sock not in victimes_sock]):
@@ -413,7 +413,7 @@ class GameServer:
         """
 
         if self.nuit_numero == 0:
-            save.save(self.role, [], None)
+            save.save(self.role, [], None, 0)
             self.broadcast(f"VOTE$Vous devez élire un maire.${self.pseudos}", "")
             time.sleep(0.2)
             self.maire = self.phase_maire()
@@ -424,7 +424,7 @@ class GameServer:
             if self.nbPlayers in [8, 9,10,11,12,13,14,15,16,17,18]:
                 self.phase_cupidon()
                 time.sleep(0.2)
-            save.save(self.role, self.amoureux, self.maire)
+            save.save(self.role, self.amoureux, self.maire, 0)
 
         self.nuit_numero+=1
 
