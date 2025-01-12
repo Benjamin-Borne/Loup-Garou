@@ -260,7 +260,7 @@ class mainInterface(tk.Tk):
             else:
                 self.listePlayers.insert(tk.END, player + " (mort)")
     
-    def updateRoleAction(self, affectedPlayers):
+    def updateRoleAction(self, affectedPlayers, obligation=None):
     
         """
         Met à jour la liste des actions disponibles en fonction des joueurs affectés et du rôle.
@@ -268,13 +268,15 @@ class mainInterface(tk.Tk):
         Input:
             affectedPlayers (list): Liste des joueurs concernés par l'action.
         """
-
-        aPlayers = affectedPlayers + ["Ne rien faire"]
+        if obligation == None:
+            aPlayers = affectedPlayers + ["Ne rien faire"]
+        else:
+            aPlayers = affectedPlayers
         self.roleAction.delete(0, self.listePlayers.size())
         for player in aPlayers:
             self.roleAction.insert(tk.END, player)
 
-    def action(self, affectedPlayers): 
+    def action(self, affectedPlayers, oblig = None): 
     
         """
         Réalise une action en fonction du rôle actuel et des joueurs affectés.
@@ -286,7 +288,7 @@ class mainInterface(tk.Tk):
             str: Nom du joueur sélectionné pour l'action, ou None si aucune action n'a été prise.
         """
          
-        self.updateRoleAction(affectedPlayers)
+        self.updateRoleAction(affectedPlayers, oblig)
         self.roleAction.pack()
         self.chronometre(50,self.roleAction.curselection)
         if self.roleAction.curselection():
